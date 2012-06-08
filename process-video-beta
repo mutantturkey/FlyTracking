@@ -1,0 +1,234 @@
+#!/bin/bash
+usage()
+{
+cat << EOF
+usage: $0 options
+
+OPTIONS:
+	-h	Show this message
+	-v	Video location
+	-l	Crop list 
+	-t	Type of video being processed 
+	-n	Set number to start
+	-d	output directory
+	-V	verbose mode
+	-1  Execute Stage 1: Extraction and Cropping
+	-2	Execute Stage 2: Deriving Backgrounds
+	-3  Execute Stage 3: Mask Generation and Filtration
+	-4 	Execute Stage 4: Generating Feature Vector
+	-S	Server list - following the GNU Parallel convention [ncpu/]sshlogin[,[ncpu/]sshlogin[,...]]
+
+Copyright 2012 Calvin Morrison
+EOF
+}
+
+function log () {
+    if [[ $verbose -eq 1 ]]; then
+        echo "$@"
+    fi
+}
+
+# Declaration of Variables
+video_file=
+crop_file=
+set_type=
+set_number=
+output_dir=
+start_dir=`pwd`
+stage_1=
+stage_2=
+stage_3=
+stage_4=
+
+server_list=
+
+while getopts "ht:n:l:d:v:S:V1234:" OPTION
+do
+	case $OPTION in
+		h)
+			usage
+			exit 1
+			;;
+		t)
+			set_type=$OPTARG
+			;;
+		n)
+			set_number=$OPTARG
+			;;
+		l)
+			crop_file=$OPTARG
+			;;
+		d)
+			output_dir=$OPTARG
+			;;
+		v)
+			video_file=$OPTARG
+      ;;
+		1) 
+			stage_1=1
+			;;
+		2) 
+			stage_2=1
+			;;
+		3)
+			stage_3=1
+			;;
+		4)
+			stage_4=1
+			;;
+		V)
+			verbose=1
+			;;
+		S)
+			server_list=$OPTARG
+			;;
+		?)
+			usage
+			exit
+			;;
+	esac
+done
+
+
+# the bare minimum required for processing.
+if [[ -z $video_file ]] || [[ -z $crop_file ]] || [[ -z $set_type ]] || [[ -z $set_number ]] ||  [[ -z $output_dir ]]
+then
+	usage
+	exit 1
+fi
+
+
+# if there are no stages set, execute them all
+if [[ -z $stage_1 ]] && [[ -z $stage_2 ]] && [[ -z $stage_3 ]] && [[ -z $stage_4 ]] 
+then
+	log "no stages set - running all stages"
+	stage_1=1
+	stage_2=1
+	stage_3=1
+	stage_4=1
+fi
+
+
+# Check that the video exists, or else quit
+if [ -f "$video_file" ]; then
+	log "$video_file exists."
+else
+	echo "error: $video_file was not found"
+	exit 1 	
+fi
+
+
+# Get absolute path of $output_dir OR create folder if it does not already exist 
+if [ -d "$output_dir" ]; then
+	cd $output_dir
+	output_dir=`pwd`
+else 
+	log "output directory $output_dir did not exist, creating now"
+	mkdir $output_dir -v
+	cd $output_dir
+	output_dir=`pwd`
+fi
+
+cd $start_dir
+log "full path of output_dir: $output_dir"
+
+
+# set i; the set number to start at
+i=$set_number
+
+
+# check for the server list
+if [[ -z $server_list ]]; then
+	  log "no server specified, using localhost"
+		$server_list=":"
+fi
+
+
+# Get the number of sets and the set range, as well as create directories
+number_of_sets=`cat $crop_file | wc -l`
+last_set=$(( $i + $number_of_sets - 1  ))
+set_list=
+
+for num in $(seq $set_number $last_set); do
+	set_list=$set_list" $set_type$num"
+	mkdir $output_dir/Cropped/$set_type$num -pv  
+	mkdir $output_dir/Masks/$set_type$num/Masks -pv
+	mkdir $output_dir/Final/$set_type$num/ -pv
+	mkdir $output_dir/Filtered/$set_type$num/final -pv
+done
+	
+log "set_list $set_list"
+
+
+# Stage 1: extract all of the pngs with Mplayer 
+if [[ $stage_1  -eq 1 ]]; then
+
+echo "Stage 1: Extracting Cropped PNGs"
+
+while read crop; do 
+
+	setname=$set_type$i
+
+  mplayer -quiet -vo png:prefix=$setname"_":outdir=$output_dir/Cropped/$setname -nosound -vf crop=$crop -speed 12 $video_file & </dev/null
+
+	i=$(( $i + 1 ))
+
+done < $crop_file
+wait
+
+fi
+
+# Stage 2: Deriving Backgrounds
+if [[ $stage_2 -eq 1	]]; then	
+  
+	echo "Stage 2: Deriving Backgrounds"
+  echo $set_list | 	parallel -v -j +0 -S derivebackground.py <(find $output_dir"/Cropped/"{}"/"*) $output_dir/Masks/{}/Background.png
+
+fi
+
+if [[ $stage_3 -eq 1 ]]; then
+
+i=$set_number
+
+while read crop; do
+	
+	setname=$set_type$i
+	
+
+	echo "Stage 3: Generating Masks" 
+	cd $output_dir/Cropped/$setname 
+	
+	log $server_list
+	#parallel -i convert -composite -compose Difference {} $output_dir/Masks/$setname/Background.png -contrast-stretch 90%x%0% -threshold 30% $output_dir/Masks/$setname/Masks/{} -- *.png
+  find `pwd`/*.png | parallel -v -j +0 -S $server_list convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
+	
+# Filtering Stage	
+	cd $output_dir
+
+	#parallel -i FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/ -- $( ls $output_dir/Masks/$setname/Masks/ )
+  ls $output_dir/Masks/$setname/Masks/ | parallel -v -j +0 -S $server_list /site/kuiper/jcm357/FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/
+	i=$(( $i + 1 ))	
+done < $crop_file
+
+fi
+
+
+if [[ $stage_4 -eq 1 ]]; then
+
+i=$set_number
+
+while read crop; do
+
+	setname="$set_type$i"
+	
+	echo "Stage 4: Generating the Feature Vector" 
+  # executablename <inputFile.txt> <originalImagePath> <finalOutputPath> <maskImagePath> <outputFilePrefix>
+  FlyTracking <(ls $output_dir/Filtered/$setname/final/) $output_dir/Cropped/$setname/ $output_dir/Final/$setname/ $output_dir/Filtered/$setname/final/ $setname &
+  
+	i=$(($i + 1)) 	
+done < $crop_file
+
+wait
+fi
+
+echo "Finished"
