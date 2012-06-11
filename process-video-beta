@@ -42,7 +42,7 @@ stage_4=
 
 server_list=
 
-while getopts "ht:n:l:d:v:S:V1234:" OPTION
+while getopts "ht:n:l:d:v:S:V1234" OPTION
 do
 	case $OPTION in
 		h)
@@ -140,7 +140,7 @@ i=$set_number
 # check for the server list
 if [[ -z $server_list ]]; then
 	  log "no server specified, using localhost"
-		$server_list=":"
+		server_list=":"
 fi
 
 
@@ -156,25 +156,22 @@ for num in $(seq $set_number $last_set); do
 	mkdir $output_dir/Final/$set_type$num/ -pv
 	mkdir $output_dir/Filtered/$set_type$num/final -pv
 done
-	
+
+while read crop; do
+ crop_list=$crop_list" $crop"
+done < $crop_file
 log "set_list $set_list"
 
 
 # Stage 1: extract all of the pngs with Mplayer 
 if [[ $stage_1  -eq 1 ]]; then
 
-echo "Stage 1: Extracting Cropped PNGs"
+	echo "Stage 1: Extracting Cropped PNGs"
 
-while read crop; do 
+	echo "$crop_list"
+	echo "$set_list"
 
-	setname=$set_type$i
-
-  mplayer -quiet -vo png:prefix=$setname"_":outdir=$output_dir/Cropped/$setname -nosound -vf crop=$crop -speed 12 $video_file & </dev/null
-
-	i=$(( $i + 1 ))
-
-done < $crop_file
-wait
+	parallel -v --progress --xapply -j 1 -S $server_list mplayer -quiet -vo png:prefix={1}"_":outdir=$output_dir/Cropped/{1} -nosound -vf crop={2} -speed 12 $video_file ::: $set_list ::: $crop_list
 
 fi
 
@@ -182,7 +179,7 @@ fi
 if [[ $stage_2 -eq 1	]]; then	
   
 	echo "Stage 2: Deriving Backgrounds"
-  echo $set_list | 	parallel -v -j +0 -S derivebackground.py <(find $output_dir"/Cropped/"{}"/"*) $output_dir/Masks/{}/Background.png
+  parallel --xapply -v -j +0 -S $server_list -q "derivebackground.py <(find $output_dir"/Cropped/"{}"/"*) $output_dir/Masks/{}/Background.png" ::: $set_list
 
 fi
 
@@ -194,7 +191,6 @@ while read crop; do
 	
 	setname=$set_type$i
 	
-
 	echo "Stage 3: Generating Masks" 
 	cd $output_dir/Cropped/$setname 
 	
@@ -202,7 +198,7 @@ while read crop; do
 	#parallel -i convert -composite -compose Difference {} $output_dir/Masks/$setname/Background.png -contrast-stretch 90%x%0% -threshold 30% $output_dir/Masks/$setname/Masks/{} -- *.png
   find `pwd`/*.png | parallel -v -j +0 -S $server_list convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
 	
-# Filtering Stage	
+  # Filtering Stage	
 	cd $output_dir
 
 	#parallel -i FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/ -- $( ls $output_dir/Masks/$setname/Masks/ )
