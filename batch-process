@@ -1,3 +1,64 @@
-#!/bin/sh
+usage()
+{
+cat << EOF
+usage: $0 options
 
+OPTIONS:
+  -h  Show this message
+  -i  Input file
+  -V  verbose mode
+
+Input file should contain the following format:
+
+VideoType:VideoLocation:StartNumber:CropList
+
+Ex First10MinSet:/path/to/video/First10MinGroup8:68:First10MinGroup8CropList.txt
+
+Copyright 2012 Calvin Morrison
+EOF
+}
+
+function log () {
+    if [[ $verbose -eq 1 ]]; then
+        echo "$@"
+    fi
+}
+
+# Declaration of Variables
+verbose=
+input_file=
+
+while getopts "Vhi:" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit 1
+      ;;
+    V)
+      verbose=1
+      ;;
+    i)
+      input_file=$OPTARG
+      ;;
+    ?)
+      usage
+      exit
+      ;;
+  esac
+done
+
+
+if [[ -z $input_file ]] 
+then
+  usage
+  exit 1
+fi
+
+if [ -f "$input_file" ]; then
+  log "$input_file exists."
+else
+  echo "error: $input_file was not found"
+  exit 1  
+fi
 
