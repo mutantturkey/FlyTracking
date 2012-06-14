@@ -1,3 +1,4 @@
+#!/bin/sh
 usage()
 {
 cat << EOF
@@ -61,4 +62,6 @@ else
   echo "error: $input_file was not found"
   exit 1  
 fi
+
+
 
