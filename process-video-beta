@@ -171,7 +171,7 @@ if [[ $stage_1  -eq 1 ]]; then
 	echo "$crop_list"
 	echo "$set_list"
 
-	parallel -v --progress --xapply -j 1 -S $server_list mplayer -quiet -vo png:prefix={1}"_":outdir=$output_dir/Cropped/{1} -nosound -vf crop={2} -speed 12 $video_file ::: $set_list ::: $crop_list
+	parallel -v --progress --xapply -S $server_list mplayer -quiet -vo png:prefix={1}"_":outdir=$output_dir/Cropped/{1} -nosound -vf crop={2} -speed 12 $video_file ::: $set_list ::: $crop_list
 
 fi
 
