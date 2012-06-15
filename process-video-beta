@@ -202,7 +202,7 @@ while read crop; do
 	cd $output_dir
 
 	#parallel -i FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/ -- $( ls $output_dir/Masks/$setname/Masks/ )
-  ls $output_dir/Masks/$setname/Masks/ | parallel -v -j +0 -S $server_list /site/kuiper/jcm357/FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/
+  ls $output_dir/Masks/$setname/Masks/ | parallel -v -j +0 -S $server_list /site/kuiper/jcm357/FilterFlyMask {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/
 	i=$(( $i + 1 ))	
 done < $crop_file
 
@@ -227,4 +227,3 @@ done < $crop_file
 wait
 fi
 
-echo "Finished"
