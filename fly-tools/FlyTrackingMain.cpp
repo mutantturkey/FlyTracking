@@ -2021,22 +2021,55 @@ ofstream foutSt;
 ofstream foutDebugCen;
 ofstream foutDebugSpeed;
 
-int main(int argc, char* argv[])
+int main(int argc, char **argv)
 {
-	if (argc < 5)
-	{
-		cerr << "Usage: executablename <inputFile.txt> <originalImagePath> <finalOutputPath> <maskImagePath> <outputFilePrefix>" << endl; // input file contains name of the
-		// input image files
-		return -1;
-	}
-	
+    int c;	
+		int writeFinalImages;
+	  string usage = "Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -O <outputFilePrefix>";
+		string origImagePath;
+		string finalOutputPath;
+		string outputFilePrefix;
+		string maskImagePath;
+		string inputFileName;
+    opterr = 0;
+
+    while ((c = getopt (argc, argv, "i:f:m:p:o:hx")) != -1)
+        switch (c)
+        {
+        case 'i':
+            inputFileName = optarg;
+            break;
+        case 'o':
+            origImagePath = optarg;
+            break;
+        case 'f':
+            finalOutputPath = optarg;
+            break;
+        case 'm':
+            maskImagePath = optarg;
+            break;
+        case 'p':
+            outputFilePrefix = optarg;
+            break;
+        case 'h':
+						cout << usage << endl;
+        		exit(1);
+						break;
+				case 'x':
+						writeFinalImages;
+						break;
+        default:
+						break;
+        }
+
 	//MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
 	//MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 4092);
 	
-	string ifns(argv[1]);
-	inputFileName = ifns;
-  //	cout << "input file name is "<<inputFileName<<endl;
-	
+	i	
+	if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
+	cerr << usage << endl;
+	exit(1);
+	}	
 	string fileName;	
 	ifstream inputFile(inputFileName.c_str());
 	// save the input file name
@@ -2045,18 +2078,8 @@ int main(int argc, char* argv[])
 		cout << "cannot open the input file that contains name of the input images\n";
 		exit(1);
 	}
-	
-	// set the global paths
-	string tempOIP(argv[2]);
-	origImagePath = tempOIP;
 
-	string tempFOP(argv[3]);
-	finalOutputPath = tempFOP;
-
-	string tempOFP(argv[5]);
-	outputFilePrefix = tempOFP;
-
-	string statFileName = tempFOP + outputFilePrefix + "_statFile.txt";
+	string statFileName = finalOutputPath + outputFilePrefix + "_statFile.txt";
 	//cout << "Statfilename is "<<statFileName<<endl;
 	foutSt.open(statFileName.c_str());
 	if (foutSt.fail()) {
@@ -2065,7 +2088,7 @@ int main(int argc, char* argv[])
 	}
 	
 	// debug file
-	string foutDebugCenFN = tempFOP + outputFilePrefix + "_statFileDebug.txt";
+	string foutDebugCenFN = finalOutputPath + outputFilePrefix + "_statFileDebug.txt";
 	foutDebugCen.open(foutDebugCenFN.c_str());
 	if (foutDebugCen.fail()) {
 		cout << "cannot open the statDebug file"<<endl;
@@ -2074,15 +2097,14 @@ int main(int argc, char* argv[])
 	
 	
 	// debug file speed distribution
-	string foutDebugSpeedFN = tempFOP + outputFilePrefix + "_speedDebug.txt";
+	string foutDebugSpeedFN = finalOutputPath + outputFilePrefix + "_speedDebug.txt";
 	foutDebugSpeed.open(foutDebugSpeedFN.c_str());
 	if (foutDebugSpeed.fail()) {
 		cout << "cannot open the speedDebug file"<<endl;
 		exit(1);
 	}
 	
-	string tempMIP(argv[4]);
-	maskImagePath = tempMIP;
+
 	
 	// open the file for statistics
 	string lPSFileName("LongestPositive.txt");
@@ -2829,7 +2851,7 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
 		
 			bool eVDirection = currentFO.getHeadIsInDirectionMAEV();
 		
-			double ev_x, ev_y;
+			//double ev_x, ev_y;
 			
 			// draw the female when tracked by the male fly
 			if (isHitting == 1) {
