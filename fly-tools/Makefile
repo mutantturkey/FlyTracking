@@ -1,5 +1,5 @@
 CC = g++
-FLAGS = -O2 -s $(shell pkg-config --cflags --libs ImageMagick++ gsl)
+FLAGS = -O2 -Wall -s $(shell pkg-config --cflags --libs ImageMagick++ gsl)
 
 
 all: FilterFlyMask FlyTrackingMain

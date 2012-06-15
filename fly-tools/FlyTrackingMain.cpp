@@ -2065,7 +2065,6 @@ int main(int argc, char **argv)
 	//MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
 	//MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 4092);
 	
-	i	
 	if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
 	cerr << usage << endl;
 	exit(1);
