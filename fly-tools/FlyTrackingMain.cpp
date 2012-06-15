@@ -1976,7 +1976,7 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
 		vector<FlyObject > fOVector = currentFI.getFOVector();
 		FlyObject cFFirstFO = fOVector[0];
 		FlyObject cFSecondFO = fOVector[1];
-		
+	 	
 		sequenceFirstAverage += cFFirstFO.getArea();
 		sequenceSecondAverage += cFSecondFO.getArea();
 		
@@ -2030,12 +2030,12 @@ int main(int argc, char* argv[])
 		return -1;
 	}
 	
-	MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
-	MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 4092);
+	//MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
+	//MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 4092);
 	
 	string ifns(argv[1]);
 	inputFileName = ifns;
-//	cout << "input file name is "<<inputFileName<<endl;
+  //	cout << "input file name is "<<inputFileName<<endl;
 	
 	string fileName;	
 	ifstream inputFile(inputFileName.c_str());
@@ -2046,22 +2046,15 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
-  //cout<<"come here ------------------------- 1"<<endl;
 	// set the global paths
 	string tempOIP(argv[2]);
 	origImagePath = tempOIP;
 
-	//cout<<"come here ------------------------- 2"<<endl;
-
 	string tempFOP(argv[3]);
 	finalOutputPath = tempFOP;
 
-	//cout<<"come here ------------------------- 3"<<endl;
-
 	string tempOFP(argv[5]);
 	outputFilePrefix = tempOFP;
-
-	//cout<<"come here ------------------------- 4"<<endl;
 
 	string statFileName = tempFOP + outputFilePrefix + "_statFile.txt";
 	//cout << "Statfilename is "<<statFileName<<endl;
@@ -2114,10 +2107,10 @@ int main(int argc, char* argv[])
 	bool currentlyCalculatingHead = true;
 	
 	
-	
+
 	while (inputFile>>fileName) {
 		
-//	Image* img = new Image(argv[1]);// = new Image(argv[1]);
+  	//	Image* img = new Image(argv[1]);// = new Image(argv[1]);
 
 		int fi = fileName.find("_");
 		// current sequence numbers spans from 0 - 18019, so 5 digits are needed
@@ -2136,7 +2129,7 @@ int main(int argc, char* argv[])
 		cout << "Reading file "<<fileName<<endl;
 		Image* img = new Image(fileName.c_str());
 		int width = img->columns(),height = img->rows();
-		diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
+		 diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
 		//cout << "Diagonal length is "<<diagLength<<endl;
 //		Image* imgWithInfo;
 //		imgWithInfo = new Image(fileName.c_str());
@@ -2184,13 +2177,12 @@ int main(int argc, char* argv[])
 			}
 		}
 		
-		
+
 		delete img;
-		
 		delete residual;
 		
-//		cout<<"Sorting the objects according to size"<<endl;
-//		bubbleSort(tempFOV);
+   //		cout<<"Sorting the objects according to size"<<endl;
+   //		bubbleSort(tempFOV);
 		
 		fOVector.clear();
 		
@@ -2793,8 +2785,8 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
 		bool eVDirection = currentFO.getHeadIsInDirectionMAEV();
 				
 		// debug:
-		cout<<"Calling the findTheStartPoint() function"<<endl;
-		cout<<"Female size "<<femaleSize<<" maleSize "<<maleSize<<" MaleCentroid = "<<centroid.first<<", "<<centroid.second<<endl;
+		//cout<<"Calling the findTheStartPoint() function"<<endl;
+		//cout<<"Female size "<<femaleSize<<" maleSize "<<maleSize<<" MaleCentroid = "<<centroid.first<<", "<<centroid.second<<endl;
 
 		// initialize the flag with false for the next found of findTheStartPoint()
 		isFoundStartPoint = false;
