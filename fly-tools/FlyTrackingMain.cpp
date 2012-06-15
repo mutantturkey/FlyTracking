@@ -2022,13 +2022,26 @@ ofstream foutSt;
 ofstream foutDebugCen;
 ofstream foutDebugSpeed;
 
+typedef void (*loggerfunc) (const string&);
+
+void logOn(const string& toprint){
+	cout << toprint << endl;
+}
+
+void logOff(const string& toprint){
+}
+
+loggerfunc vlog = NULL;
+
 int main(int argc, char **argv)
 {
+
     int c;	
+		bool verbose = false;
 	  string usage = "Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -O <outputFilePrefix>";
     opterr = 0;
 
-    while ((c = getopt (argc, argv, "i:f:m:p:o:hx")) != -1)
+    while ((c = getopt (argc, argv, "i:f:m:p:o:hxv")) != -1)
         switch (c)
         {
         case 'i':
@@ -2053,13 +2066,24 @@ int main(int argc, char **argv)
 				case 'x':
 						writeFinalImages = true;
 						break;
-        default:
+				case 'v':
+						verbose = true;
+						break;
+				default:
 						break;
         }
 
 	//MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
 	//MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 4092);
-	
+	if(verbose) {
+   vlog =  &logOn;
+  }	else {
+	 vlog = &logOff;
+	}
+
+	vlog("verbose logging out");
+
+	exit(0);
 	if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
 	cerr << usage << endl;
 	exit(1);
