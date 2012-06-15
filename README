@@ -1,3 +1,21 @@
 README
 
-This contains all of the sources codes used for the Fly Tracking project.
+This contains all of the source codes used for the Fly Tracking project.
+
+You will find a few scripts to automate the processing of the data:
+
+./process-video-beta
+./batch-process
+
+You will find two programs, FilterFlyMask and FlyTracking in fly-tools. You
+will need to make them which is easy to do. If you have trouble building, 
+please make sure that you have gsl and ImageMagick++ libraries and headers
+installed.
+
+$ cd fly-data
+$ make
+
+The programs that will be build are located here
+:
+./fly-tools/FilterFlyMask
+./fly-tools/FlyTracking
