@@ -59,6 +59,7 @@ int endOfAOneObject = -1;
 vector<string> fnVector;
 string inputFileName;
 
+bool writeFinalImages = false;
 // GLOBAL PATHS
 string maskImagePath;
 string origImagePath;
@@ -2024,13 +2025,7 @@ ofstream foutDebugSpeed;
 int main(int argc, char **argv)
 {
     int c;	
-		int writeFinalImages;
 	  string usage = "Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -O <outputFilePrefix>";
-		string origImagePath;
-		string finalOutputPath;
-		string outputFilePrefix;
-		string maskImagePath;
-		string inputFileName;
     opterr = 0;
 
     while ((c = getopt (argc, argv, "i:f:m:p:o:hx")) != -1)
@@ -2056,7 +2051,7 @@ int main(int argc, char **argv)
         		exit(1);
 						break;
 				case 'x':
-						writeFinalImages;
+						writeFinalImages = true;
 						break;
         default:
 						break;
@@ -2151,9 +2146,10 @@ int main(int argc, char **argv)
 		Image* img = new Image(fileName.c_str());
 		int width = img->columns(),height = img->rows();
 		 diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
+	
 		//cout << "Diagonal length is "<<diagLength<<endl;
-//		Image* imgWithInfo;
-//		imgWithInfo = new Image(fileName.c_str());
+    //		Image* imgWithInfo;
+    //		imgWithInfo = new Image(fileName.c_str());
 		sprintf(buffer,"%ix%i",width,height);
 		string imsize(buffer);
 		imgSize = imsize;
@@ -2766,17 +2762,12 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob, bool unprocessed) {
 	
 	cout << "isFirst is "<<isFirst<<endl;
-	
-	//string inputFileName = origImagePath + fileName;
-	//	string inputFileName = "output/identified/"+fileName;
-	
-	// when do not want to identify on the original comment the line below and uncomment the above line
-	// debugging for drawing the circle
-	//string outputFileName = finalOutputPath + fileName;
-	//	string outputFileName = "output/identified_with_cropped/" + fileName;
-	
-	//Image* img = new Image(inputFileName.c_str());
-	
+		
+	if(writeFinalImages) {	
+	string inputFileName = origImagePath + fileName;
+	string outputFileName = finalOutputPath + fileName;
+	Image* img = new Image(inputFileName.c_str());
+	}
 	vector<FlyObject > fOVector = currentFI.getFOVector();
 	
 	cout << "While drawing it found objects = "<<fOVector.size()<<endl;
