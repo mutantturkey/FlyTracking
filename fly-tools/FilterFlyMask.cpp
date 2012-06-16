@@ -135,26 +135,45 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> & len)
 
 int main(int argc, char* argv[])
 {
-  if (argc < 5)
-  {
+    string usage = "Usage: FilterFlyMask -f <image filename> -r <ratio> -m <mask image> -o <outputFolderName>";
+		string fileName;
+		string inputMaskFileLocation;
+		string outputFileLocation;
+		double ratioSecondLargestToLargest;
+		int c;
+    opterr = 0;
 
-    cerr << "Usage: executablename <filename> <ratio_largest_to_second_largest> <InputLocationOfMaskImage> <outputFolderName>" << endl; // input file contains name of the
-    // input image files
-    return -1;
-  }
-
+    while ((c = getopt (argc, argv, "m:f:r:o:hv")) != -1)
+        switch (c)
+        {
+        case 'f':
+            fileName = optarg;
+            break;
+        case 'm':
+            inputMaskFileLocation = optarg;
+            break;
+        case 'r':
+            ratioSecondLargestToLargest = atof(optarg);
+            break;
+        case 'o':
+            outputFileLocationi = optarg;
+            break;
+        case 'v':
+            break;
+        case 'h':
+						cout << usage << endl;
+        		exit(1);
+						break;
+				defaut:
+						break;
+				}
+	
+	if( fileName.empty() || inputMaskFileLocation.empty() || ratioSecondLargestToLargest == NULL || outputFileLocation.empty()) {
+		cout << usage << endl;
+		exit(1);
+	}
   //MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
   //MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 2048);
-
-
-  // Arg 1 is a file name, this is the actual name (First10MinSet48_0000001.png)
-  string fileName = argv[1];
-  // Arg 2 is the ratio of the second largest to largest. Use 15.
-  double ratioSecondLargestToLargest = atof(argv[2]);
-  // Arg 3 is the location of the Masks
-  string inputMaskFileLocation(argv[3]);
-  // Arg 4 is the output folder for the Filtered images.
-  string outputFileLocation(argv[4]);
 
   ratioSecondLargestToLargest = 1/ratioSecondLargestToLargest;
 
@@ -233,7 +252,6 @@ int main(int argc, char* argv[])
       }
     }
 
-
     bubbleSort();
 
     // take the largest object
@@ -309,16 +327,10 @@ int main(int argc, char* argv[])
 void findObjIterative(Image* img, int x, int y, vector<pair<int, int> > & shape, bool eightCon, double colorLookingFor) {
 
   assert(imgForFilter != NULL);
-
-  //if (eightCon == true)
-  //	eightConnObjIterative(img, x, y, shape, colorLookingFor);
-  //else {
   fourConnObjIterative(img, x, y, shape, colorLookingFor);
 
-  //}
-
-
 }
+
 
 void fourConnObjIterative(Image* img, int x, int y, vector<pair<int, int> > & obj, double colorLookingFor) {
 
