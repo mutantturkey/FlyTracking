@@ -15,7 +15,9 @@ installed.
 $ cd fly-data
 $ make
 
-The programs that will be build are located here
-:
+The programs that will be build are located here:
+
 ./fly-tools/FilterFlyMask
 ./fly-tools/FlyTracking
+
+More documentation is included in the README file in fly-tools/
