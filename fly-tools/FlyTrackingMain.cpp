@@ -1,5 +1,5 @@
 #include <iostream>
-#include<iomanip>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <cmath>
@@ -26,6 +26,17 @@ const double FACTOR_EIGEN = 100;
 const int STUCKING_TO_A_SINGLE_BLOB = 1;
 const int SEPARATING_FROM_SINGLE_BLOB = 2;
 
+
+typedef void (*loggerfunc) (const string&);
+
+void logOn(const string& toprint){
+	cout << toprint << endl;
+}
+
+void logOff(const string& toprint){
+}
+
+loggerfunc vlog = NULL;
 
 Image* residual;
 
@@ -88,12 +99,9 @@ map<unsigned int, unsigned int> headDirAngleMap;
 map<unsigned int, unsigned int> speedMap;
 
 void initSequence(){
-	
 	startOfATrackSequence = -1;
 	endOfATrackSequence = -1;
 	sequenceSize = 1;
-	
-
 }
 
 ostream &operator<<(ostream &out, FlyObject & fO) {
@@ -107,8 +115,6 @@ ostream &operator<<(ostream &out, FrameInfo & fI) {
 }
 
 void bubbleSort(vector<FlyObject > & fov) {
-	
-	//FlyObject a,b,c;
 	for(int i=1; i<fov.size(); i++) {
 		for(int j=0; j<fov.size()-i; j++) {
 			FlyObject a = fov[j];
@@ -118,21 +124,17 @@ void bubbleSort(vector<FlyObject > & fov) {
 				FlyObject c = fov[j];
 				fov[j] = fov[j+1];
 				fov[j+1] = c;
-			
 			}
-			
 		}
-		
 	}
-
 }
 
 void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
 {
-	cout << "In the beginning of the write hist\n";
-	cout << "dataMap size "<<dataMap.size()<<endl;
+	vlog("In the beginning of the write hist\n");
+	vlog("dataMap size "+ dataMap.size());
 	if (dataMap.size() == 0) {
-		cout << "Empty histogram"<<endl;
+		vlog("Empty histogram");
 		ofstream fout(filename);
 		fout <<"No entry in the histogram and size is " << dataMap.size() << endl;
 		fout.close();
@@ -692,7 +694,6 @@ void putPixel(Image* maskImage, int x, int y, int color) {
 			pair<int,int> temp(x,y);
 			bresenhamLine.push_back(temp);
 		}
-
 	
 }
 
@@ -1130,8 +1131,6 @@ int sequenceCondition(FrameInfo prevFI,FrameInfo currentFI) {
 }
 
 
-
-
 void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob, bool unprocessed) {
 
 	cout << "Should draw "<<isFirst<<endl;
@@ -1201,6 +1200,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO) {
 
 }
 
+
 void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO, bool prevFFOHD) {
 	
 	// take the head direction from the previous frame
@@ -1246,6 +1246,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO, bool prevFFOHD)
 	}
 	
 }
+
 
 void objectHeadDirection(FlyObject &currentFO, int saveEV=0) {
 
@@ -1319,8 +1320,7 @@ void objectHeadDirection(FlyObject &currentFO, pair<double, double> cFV) {
 		currentFO.setHead(cFOREV);
 		currentFO.setHeadIsInDirectionMAEV(false);
 	}
-	
-	
+
 }
 
 
@@ -1367,6 +1367,7 @@ void velocityDirection(int st, int end, pair<double, double > &velDirectionF, pa
 	
 }
 
+
 double getSpeed(pair<double, double> vector) {
 	double value = vector.first*vector.first + vector.second*vector.second;
 	value = sqrt(value);
@@ -1375,6 +1376,7 @@ double getSpeed(pair<double, double> vector) {
 	
 	
 }
+
 
 void velocityDirections(int stIndex, int endIndex) {
 	
@@ -1453,9 +1455,7 @@ void velocityDirections(int stIndex, int endIndex) {
 		*/
 		
 	}
-	
-	
-	
+		
 }
 
 
@@ -1532,7 +1532,6 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 	} else {
 		cout << "For second"<<endl;
 	}
-
 	
 	/*double maxDotProduct = -1;
 	int maxDotProductIndex = -1;
@@ -1611,9 +1610,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 		currentFI.setFOVector(cFOVector);
 		fIVector[t] = currentFI;
 	}
-	
-	
-	
+		
 	int intervalLength = 1;
 	if ((e-s)> intervalLength) {
 		
@@ -1737,8 +1734,6 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 		}
 		
 	}
-	
-	
 	
 	// propagate downwards
 	prevFI = fIVector[s];
@@ -2021,17 +2016,6 @@ int diagLength;
 ofstream foutSt;
 ofstream foutDebugCen;
 ofstream foutDebugSpeed;
-
-typedef void (*loggerfunc) (const string&);
-
-void logOn(const string& toprint){
-	cout << toprint << endl;
-}
-
-void logOff(const string& toprint){
-}
-
-loggerfunc vlog = NULL;
 
 int main(int argc, char **argv)
 {
@@ -2780,9 +2764,10 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 		foutSt <<"Current frame is unprocessed"<<endl;
 	} // else condition would never be generated singleBlob == true and unprocessed == true.
 	// so it is not checked.
-
 		
 }
+
+
 void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob, bool unprocessed) {
 	
 	cout << "isFirst is "<<isFirst<<endl;
