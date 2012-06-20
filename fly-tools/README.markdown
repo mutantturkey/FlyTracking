@@ -26,9 +26,8 @@ This tool creates masks from cropped video frames, which the need to be filtered
 
 Usage:
 
-	mask-generator <derived-background> <input-list> <output-folder>
+	mask-generator -b <derived-background> -i <input-list> -o <output-folder>
 
 Todo: 
 
-* implement getops
 * automatically detect CPU count and apply threads accordingly 
