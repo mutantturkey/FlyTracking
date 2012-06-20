@@ -44,8 +44,8 @@ void convert_image(char *file) {
   // convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
 
   MagickCompositeImage(mask, background, DifferenceCompositeOp, 0, 0);
-  MagickContrastStretchImage(mask, MagickGetImageWhitePoint(mask), MagickGetImageBlackPoint(mask)); 
-//	MagickThresholdImage(mask, 0.30);
+  MagickAutoLevelImage(mask); 
+	MagickThresholdImage(mask, 0.30);
 
 	sprintf(output_name, "%s%s", global_argv[3], basename(file));
   if(MagickWriteImages(mask, output_name, MagickTrue) == MagickFalse) {
