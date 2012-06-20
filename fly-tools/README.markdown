@@ -1,17 +1,34 @@
 fly-tools
 =========
 
-This page details the usage of each tool.
-
-Fly Tracking
+FlyTracking
 ------------
 
-The Fly Tracking application does the bulk of the work.
+The FlyTracking application does the bulk of the work.
 
 Usage:
 
-	FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -O <outputFilePrefix>"
+	FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -O <outputFilePrefix>
 
-FilterFlymask
+FilterFlyMask
 ------------
 
+FilterFlyMask runs some filtering operations on masks to ensure that the FlyTracking tool processes the information correctly.
+
+Usage:
+
+	 FilterFlyMask -f <image filename> -r <ratio> -m <mask image> -o <outputFolderName>
+
+mask-generator
+-------------
+
+This tool creates masks from cropped video frames, which the need to be filtered by the FilterFlyMask tool.
+
+Usage:
+
+	mask-generator <derived-background> <input-list> <output-folder>
+
+Todo: 
+
+* implement getops
+* automatically detect CPU count and apply threads accordingly 
