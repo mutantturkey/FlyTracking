@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <errno.h>
@@ -140,6 +141,8 @@ int thpool_add_work(thpool_t* tp_p, void *(*function_p)(void*), void* arg_p){
 	pthread_mutex_lock(&mutex);                  /* LOCK */
 	thpool_jobqueue_add(tp_p, newJob);
 	pthread_mutex_unlock(&mutex);                /* UNLOCK */
+	
+	return(1);
 }
 
 
@@ -148,7 +151,7 @@ void thpool_destroy(thpool_t* tp_p){
 	int t;
 
 	while(tp_p->jobqueue->jobsN > 0) {
-	 usleep(500000);
+	 usleep(50000);
 	}	
 	/* End each thread's infinite loop */
 	thpool_keepalive=0; 

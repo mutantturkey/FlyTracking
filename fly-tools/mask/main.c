@@ -18,6 +18,8 @@
  * */
 
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 #include <stdlib.h> 
 #include <libgen.h>
 #include <wand/MagickWand.h> 
@@ -34,7 +36,6 @@ char **global_argv;
 void convert_image(char *file) {
 
 	MagickWand *mask = NewMagickWand();
-	MagickBooleanType status;
 	char *output_name = malloc(256);
 	if(MagickReadImage(mask, file) == MagickFalse) {
   ThrowWandException(mask);

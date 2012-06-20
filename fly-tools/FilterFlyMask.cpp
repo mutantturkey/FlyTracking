@@ -156,7 +156,7 @@ int main(int argc, char* argv[])
             ratioSecondLargestToLargest = atof(optarg);
             break;
         case 'o':
-            outputFileLocationi = optarg;
+            outputFileLocation = optarg;
             break;
         case 'v':
             break;

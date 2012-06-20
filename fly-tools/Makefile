@@ -1,14 +1,17 @@
-CC = g++
-FLAGS = -O2 -Wall -s $(shell pkg-config --cflags --libs ImageMagick++ gsl)
+CPPC = g++
+CC = gcc
+CPPFLAGS = -O2 -Wall -s $(shell pkg-config --cflags --libs ImageMagick++ gsl)
+CFLAGS = -O2 -Wall -s $(shell pkg-config --cflags --libs MagickWand)
 
+all: FilterFlyMask FlyTrackingMain mask-generator
 
-all: FilterFlyMask FlyTrackingMain
-
+mask-generator:
+	$(CC) mask/main.c mask/thpool.c -I./mask/ -o mask-generator $(CFLAGS) -pthread
 FlyTrackingMain:
-	$(CC) FlyTrackingMain.cpp FlyObject.cpp FrameInfo.cpp -o FlyTracking $(FLAGS)
+	$(CPPC) FlyTrackingMain.cpp FlyObject.cpp FrameInfo.cpp -o FlyTracking $(CPPFLAGS)
 
 FilterFlyMask:
-	$(CC) FilterFlyMask.cpp FlyObject.cpp FrameInfo.cpp -o FilterFlyMask $(FLAGS)
+	$(CPPC) FilterFlyMask.cpp FlyObject.cpp FrameInfo.cpp -o FilterFlyMask $(CPPFLAGS)
 
 clean:
-	rm -vf FilterFlyMask FlyTracking
+	rm -vf FilterFlyMask FlyTracking mask-generator
