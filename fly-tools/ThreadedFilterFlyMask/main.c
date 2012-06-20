@@ -46,7 +46,7 @@ void convert_image(char *file) {
   MagickCompositeImage(mask, background, DifferenceCompositeOp, 0, 0);
 //	MagickContrastStretchImage(mask, 90000, 0);
   MagickAutoLevelImage(mask); 
-	MagickThresholdImage(mask, 25000);
+	MagickThresholdImage(mask, 30000);
 
 	sprintf(output_name, "%s%s", global_argv[3], basename(file));
   if(MagickWriteImages(mask, output_name, MagickTrue) == MagickFalse) {
@@ -79,7 +79,7 @@ int main( int argc, char **argv){
 	}
 
 	thpool_t* threadpool;             /* make a new thread pool structure     */
-	threadpool=thpool_init(8);        /* initialise it to 4 number of threads */
+	threadpool=thpool_init(4);        /* initialise it to 4 number of threads */
 
 	char filename[256];	
 	char *temp;
