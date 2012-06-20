@@ -1,21 +1,4 @@
-/* 
- * This is just an example on how to use the thpool library 
- * 
- * We create a pool of 4 threads and then add 20 tasks to the pool(10 task1 
- * functions and 10 task2 functions).
- * 
- * Task1 doesn't take any arguments. Task2 takes an integer. Task2 is used to show
- * how to add work to the thread pool with an argument.
- * 
- * As soon as we add the tasks to the pool, the threads will run them. One thread
- * may run x tasks in a row so if you see as output the same thread running several
- * tasks, it's not an error.
- * 
- * All jobs will not be completed and in fact maybe even none will. You can add a sleep()
- * function if you want to complete all tasks in this test file to be able and see clearer
- * what is going on.
- * 
- * */
+// Calvin Morrison Copyright 2012 
 
 #include <stdio.h>
 #include <string.h>
@@ -31,7 +14,7 @@
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
 
 MagickWand *background;
-char **global_argv;
+char *output_folder = NULL;
 
 void convert_image(char *file) {
 
@@ -49,7 +32,7 @@ void convert_image(char *file) {
   MagickAutoLevelImage(mask); 
 	MagickThresholdImage(mask, 30000);
 
-	sprintf(output_name, "%s%s", global_argv[3], basename(file));
+	sprintf(output_name, "%s%s", output_folder, basename(file));
   if(MagickWriteImages(mask, output_name, MagickTrue) == MagickFalse) {
 		ThrowWandException(mask);
 	}
@@ -63,17 +46,43 @@ void convert_image(char *file) {
 
 int main( int argc, char **argv){
 
-	// argv 1 = Background
-	// argv 2 = input list
-	// argv 3 = output folder
-	
+  char *usage = "Usage: generate-mask -b <Background filename> -i <image list > -o <outputFolderName>";
+  char *background_file = NULL;
+  char *image_list = NULL;
+  int c;
+  opterr = 0;
+
+  while ((c = getopt (argc, argv, "b:i:o:hv")) != -1)
+    switch (c) {
+      case 'b':
+        background_file = optarg;
+        break;
+      case 'i':
+        image_list = optarg;
+        break;
+      case 'o':
+        output_folder = optarg;
+        break;
+      case 'v':
+        break;
+      case 'h':
+        puts(usage);
+        exit(1);
+        break;
+      default:
+      break;
+}
+
+  if( background_file == NULL || image_list == NULL || output_folder == NULL ) {
+    puts(usage);
+    exit(1);
+	}
 	MagickBooleanType   status;
-	global_argv = argv;
   MagickWandGenesis();
 
   background = NewMagickWand();
 
-  status=MagickReadImage(background,argv[1]);
+  status=MagickReadImage(background, background_file);
   if (status == MagickFalse) {
 		puts("background could not load error");
 		exit(0);
@@ -84,7 +93,7 @@ int main( int argc, char **argv){
 
 	char filename[256];	
 	char *temp;
-	FILE *f = fopen ( argv[2], "r" );
+	FILE *f = fopen ( image_list, "r" );
 	if ( f != NULL ) {
 		while ( fgets ( filename, sizeof(filename), f ) != NULL ) {
 			temp = strchr(filename, '\n');
