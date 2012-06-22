@@ -109,15 +109,6 @@ then
 fi
 
 
-# Check that the video exists, or else quit
-if [ -f "$video_file" ]; then
-	log "$video_file exists."
-else
-	echo "error: $video_file was not found"
-	exit 1 	
-fi
-
-
 # Get absolute path of $output_dir OR create folder if it does not already exist 
 if [ -d "$output_dir" ]; then
 	cd $output_dir
@@ -151,6 +142,7 @@ set_list=
 
 for num in $(seq $set_number $last_set); do
 	set_list=$set_list" $set_type$num"
+	log "creating directory structure"
 	mkdir $output_dir/Cropped/$set_type$num -pv  
 	mkdir $output_dir/Masks/$set_type$num/Masks -pv
 	mkdir $output_dir/Final/$set_type$num/ -pv
@@ -166,6 +158,13 @@ log "set_list $set_list"
 # Stage 1: extract all of the pngs with Mplayer 
 if [[ $stage_1  -eq 1 ]]; then
 
+	# Check that the video exists, or else quit
+	if [ -f "$video_file" ]; then
+		log "$video_file exists."
+	else
+		echo "error: $video_file was not found"
+	exit 1 	
+	fi
 	echo "Stage 1: Extracting Cropped PNGs"
 
 	echo "$crop_list"
