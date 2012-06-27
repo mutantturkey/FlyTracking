@@ -62,10 +62,10 @@ int main(int argc, char **argv ) {
 
   // initialize this crazy array.
   uint8_t ****array;
-  uint8_t dim1 = nImages;
-  uint8_t dim2 = height;
-  uint8_t dim3 = width;
-  uint8_t dim4 = 3;
+  int dim1 = nImages;
+  int dim2 = height;
+  int dim3 = width;
+  int dim4 = 3;
 
   array = calloc(dim1, sizeof(array[0]));
   for(i = 0; i < dim1; i++)
@@ -88,12 +88,11 @@ int main(int argc, char **argv ) {
 
       magick_wand = NewMagickWand();
       MagickReadImage(magick_wand, filename);
-      sleep(1);
 
        PixelIterator* iterator = NewPixelIterator(magick_wand);
 
        PixelWand **pixels = PixelGetNextIteratorRow(iterator,&number_wands);
-       printf("Image number:%d Filename: %s", image, filename);
+       printf("Image number:%d Filename: %s \n", image, filename);
        for (i=0; pixels != (PixelWand **) NULL; i++) {
          for (j=0; j<number_wands; j++) {
 
@@ -101,7 +100,7 @@ int main(int argc, char **argv ) {
            blue = PixelGetBlue(*pixels);
            red = PixelGetRed(*pixels);
 
-           printf("write: %d %d %d \n", round(red*255), round(green*255), round(blue*255));
+       //    printf("write: %d %d %d \n", round(red*255), round(green*255), round(blue*255));
            array[image][i][j][0] = round(red*255);
            array[image][i][j][1] = round(green*255);
            array[image][i][j][2] = round(blue*255); 
@@ -129,13 +128,12 @@ int main(int argc, char **argv ) {
      for (j = 0; j < height; j++) {
        for (k = 0; k < width; k++) {
          //for (l = 0; l < 3; l++) {d
-         printf("print: %d %d %d %hhu %hhu %hhu \n", i, j, k, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
+         //printf("print: %d %d %d %hhu %hhu %hhu \n", i, j, k, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
          // }
        }
      }
    }
 
-  sleep(10);
   MagickWandTerminus();
 
   return 0;
