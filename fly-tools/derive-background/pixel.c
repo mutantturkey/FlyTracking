@@ -13,11 +13,9 @@ int main(int argc, char **argv ) {
 
   MagickWand *magick_wand;
   MagickWand *first;
-
   double green = 0;
   double red = 0;
   double blue = 0;
-
 
   int image = 0;
 
@@ -122,8 +120,12 @@ int main(int argc, char **argv ) {
     exit(0);
   }
 
+
+  // initialize the output array
+  int output[height][width][3];
+
   // calculate histograms
-  //
+
   for (j = 0; j < height; j++) {
     for (k = 0; k < width; k++) {
 
@@ -140,25 +142,65 @@ int main(int argc, char **argv ) {
         gsl_histogram_increment (r, array[i][j][k][0]);
         gsl_histogram_increment (g, array[i][j][k][1]);
         gsl_histogram_increment (b, array[i][j][k][2]);
-        //printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
+      //  printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
       }
-      
-    size_t red = gsl_histogram_max_val(r);
-    size_t green = gsl_histogram_max_val(r);
-    size_t blue = gsl_histogram_max_val(r);
-    int red_val = array[red - 1 ][j][k][0];
-    int blue_val = array[blue - 1 ][j][k][1];
-    int green_val = array[green - 1][j][k][2];
-    printf("h:%d w:%d rm: %d gm: %d bm: %d rv: %lu bv: %lu gv:%lu\n",
-    j, k, red_val, green_val, blue_val, red, blue, green);
 
-    gsl_histogram_free (r);
-    gsl_histogram_free (g);
-    gsl_histogram_free (b);
-  
+
+      size_t red = gsl_histogram_max_val(r);
+      size_t green = gsl_histogram_max_val(r);
+      size_t blue = gsl_histogram_max_val(r);
+      output[j][k][0] = array[red][j][k][0];
+      output[j][k][1] = array[green][j][k][1];
+      output[j][k][2] = array[blue][j][k][2];
+
+      printf("calculated histogram for (%d,%d) \n ", j, k); 
+      /* int red_val = array[red - 1 ][j][k][0];
+         int blue_val = array[blue - 1 ][j][k][1];
+         int green_val = array[green - 1][j][k][2];
+         printf("h:%d w:%d rm: %d gm: %d bm: %d rv: %lu bv: %lu gv:%lu\n",
+         j, k, red_val, green_val, blue_val, red, blue, green);
+         */
+      gsl_histogram_free (r);
+      gsl_histogram_free (g);
+      gsl_histogram_free (b); 
     }
   }
 
+  MagickWand *m_wand = NULL;
+  PixelWand *p_wand = NULL;
+  PixelIterator *iterator = NULL;
+  PixelWand **pixels = NULL;
+
+  int x,y;
+  int grey;
+  MagickWandGenesis();
+
+  p_wand = NewPixelWand();
+  PixelSetColor(p_wand,"white");
+  m_wand = NewMagickWand();
+  
+  MagickNewImage(m_wand,height,width,p_wand);
+
+  // Get a new pixel iterator
+  iterator=NewPixelIterator(m_wand);
+
+  for(y=0; y < height;y++) {
+    // Get the next row of the image as an array of PixelWands
+
+    pixels=PixelGetNextIteratorRow(iterator,&x);
+    for(x=0; x < width; x++) {
+      char rgb[17];
+      sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
+      printf("(%d,%d) %s \n", y, x, rgb);
+      PixelSetColor(pixels[x], rgb);
+    }
+    // Sync writes the pixels back to the m_wand
+    PixelSyncIterator(iterator);
+  }
+  // Clean up
+  iterator=DestroyPixelIterator(iterator);
+  MagickWriteImage(m_wand,"output.png");
+  DestroyMagickWand(m_wand);
   MagickWandTerminus();
 
   return 0;
