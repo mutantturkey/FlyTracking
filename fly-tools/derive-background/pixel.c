@@ -13,7 +13,6 @@ int main(int argc, char **argv ) {
 
 
   MagickWand *magick_wand;
-  MagickWand *output_wand;
   MagickWand *first_wand;
 
   double green, red, blue;
@@ -35,7 +34,7 @@ int main(int argc, char **argv ) {
 
   // open the first image and get the height and width
   first_wand = NewMagickWand();
-  if(MagickReadImage(first_wand, "Background.png") == MagickFalse) {
+  if(MagickReadImage(first_wand, argv[2]) == MagickFalse) {
     ThrowWandException(first_wand);
   }
   height =  MagickGetImageHeight(first_wand);
@@ -137,7 +136,7 @@ int main(int argc, char **argv ) {
         gsl_histogram_increment (r, array[i][j][k][0]);
         gsl_histogram_increment (g, array[i][j][k][1]);
         gsl_histogram_increment (b, array[i][j][k][2]);
-       //printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
+        //printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
       }
 
 
@@ -148,10 +147,10 @@ int main(int argc, char **argv ) {
       int green_index = gsl_histogram_get(g, green);
       int blue_index = gsl_histogram_get(b, blue);
       output[j][k][0] = array[red_index - 1 ][j][k][0];
-      output[j][k][1] = array[blue_index - 1 ][j][k][1];
-      output[j][k][2] = array[green_index - 1 ][j][k][1];
+      output[j][k][1] = array[green_index - 1 ][j][k][1];
+      output[j][k][2] = array[blue_index - 1 ][j][k][2];
 
-      printf("i (%d,%d) rgb(%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+      printf("i (%d,%d) out(%d,%d,%d) arr(%d, %d, %d)\n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2], array[red_index - 1][j][k][0], array[green_index - 1][j][k][1], array[blue_index - 1][j][k][2]); 
 
       gsl_histogram_free (r);
       gsl_histogram_free (g);
@@ -159,67 +158,37 @@ int main(int argc, char **argv ) {
     }
   }
 
-   MagickWand *m_wand = NULL;
-   PixelWand *p_wand = NULL;
-   PixelIterator *iterator = NULL;
-   PixelWand **pixels = NULL;
-   int x,y;
-   char rgb[128];
+  MagickWand *m_wand = NULL;
+  PixelWand *p_wand = NULL;
+  PixelIterator *iterator = NULL;
+  PixelWand **pixels = NULL;
+  int x,y;
+  char rgb[128];
 
-   MagickWandGenesis();
+  MagickWandGenesis();
 
-   p_wand = NewPixelWand();
-   PixelSetColor(p_wand,"white");
-    m_wand = NewMagickWand();
-   // Create a 100x100 image with a default of white
-   MagickNewImage(m_wand,height,width,p_wand);
-   // Get a new pixel iterator 
-   iterator=NewPixelIterator(m_wand);
-   for(y=0;y<100;y++) {
-      // Get the next row of the image as an array of PixelWands
-      pixels=PixelGetNextIteratorRow(iterator,&x);
-      // Set the row of wands to a simple gray scale gradient
-      for(x=0;x<100;x++) {
-         sprintf(rgb, "rgb(%d,%d,%d)", array[0][i][j][0], array[0][i][j][1], array[0][i][j][2]);
-         PixelSetColor(pixels[x],rgb);
-      }
-      // Sync writes the pixels back to the m_wand
-      PixelSyncIterator(iterator);
-   }
-   // Clean up
-   iterator=DestroyPixelIterator(iterator);
-   MagickWriteImage(m_wand,"output.png");
-   DestroyMagickWand(m_wand);
-    MagickWandTerminus();
-
-
-  // write the histogram data to an image
- // output_wand = NewMagickWand();
- // PixelWand *p = NewPixelWand();
- // PixelSetColor(p, "white");
- // if(MagickNewImage(output_wand, height, width, p) == MagickFalse) {
- //   ThrowWandException(output_wand);
- // }
-
- // PixelIterator* iterator = NewPixelIterator(output_wand);
- // PixelWand **pixels = PixelGetNextIteratorRow(iterator,&number_wands);
-
- // printf("Image number:%d Filename: %s \n", image, filename);
- // for (i=0; i<=height; i++) {
- //   for (j=0; j<width; j++) {
-
- //     char rgb[24];
-
- //     //sprintf(rgb, "rgb(0,20,0)");
- //     printf("o (%d,%d) %s \n", i, j, rgb);
- //     if( (PixelSetColor(pixels[j], rgb)) == MagickFalse ) { 
- //       ThrowWandException(output_wand);
- //     }
- //   }
- //   PixelSyncIterator(iterator);
- //   pixels=PixelGetNextIteratorRow(iterator,&number_wands);
- // }
-
+  p_wand = NewPixelWand();
+  PixelSetColor(p_wand,"white");
+  m_wand = NewMagickWand();
+  // Create a 100x100 image with a default of white
+  MagickNewImage(m_wand,height,width,p_wand);
+  // Get a new pixel iterator 
+  iterator=NewPixelIterator(m_wand);
+  for(y=0;y<150;y++) {
+    // Get the next row of the image as an array of PixelWands
+    pixels=PixelGetNextIteratorRow(iterator,&x);
+    // Set the row of wands to a simple gray scale gradient
+    for(x=0;x<150;x++) {
+      sprintf(rgb, "rgb(%d,%d,%d)", output[i][j][0], output[i][j][1], output[i][j][2]);
+      PixelSetColor(pixels[x],rgb);
+    }
+    // Sync writes the pixels back to the m_wand
+    PixelSyncIterator(iterator);
+  }
+  // Clean up
+  iterator=DestroyPixelIterator(iterator);
+  MagickWriteImage(m_wand,"output.png");
+  DestroyMagickWand(m_wand);
 
   MagickWandTerminus();
 
