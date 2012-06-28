@@ -1,4 +1,5 @@
 #include <wand/MagickWand.h>
+#include <gsl/gsl_histogram.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,50 +90,74 @@ int main(int argc, char **argv ) {
       magick_wand = NewMagickWand();
       MagickReadImage(magick_wand, filename);
 
-       PixelIterator* iterator = NewPixelIterator(magick_wand);
+      PixelIterator* iterator = NewPixelIterator(magick_wand);
 
-       PixelWand **pixels = PixelGetNextIteratorRow(iterator,&number_wands);
-       printf("Image number:%d Filename: %s \n", image, filename);
-       for (i=0; pixels != (PixelWand **) NULL; i++) {
-         for (j=0; j<number_wands; j++) {
+      PixelWand **pixels = PixelGetNextIteratorRow(iterator,&number_wands);
+      printf("Image number:%d Filename: %s \n", image, filename);
+      for (i=0; pixels != (PixelWand **) NULL; i++) {
+        for (j=0; j<number_wands; j++) {
 
-           green = PixelGetGreen(*pixels);
-           blue = PixelGetBlue(*pixels);
-           red = PixelGetRed(*pixels);
+          green = PixelGetGreen(*pixels);
+          blue = PixelGetBlue(*pixels);
+          red = PixelGetRed(*pixels);
 
-       //    printf("write: %d %d %d \n", round(red*255), round(green*255), round(blue*255));
-           array[image][i][j][0] = round(red*255);
-           array[image][i][j][1] = round(green*255);
-           array[image][i][j][2] = round(blue*255); 
-         }
-         PixelSyncIterator(iterator);
-         pixels=PixelGetNextIteratorRow(iterator,&number_wands);
-       }
+          //    printf("write: %d %d %d \n", round(red*255), round(green*255), round(blue*255));
+          array[image][i][j][0] = round(red*255);
+          array[image][i][j][1] = round(green*255);
+          array[image][i][j][2] = round(blue*255); 
+        }
+        PixelSyncIterator(iterator);
+        pixels=PixelGetNextIteratorRow(iterator,&number_wands);
+      }
 
-       PixelSyncIterator(iterator);
-       iterator=DestroyPixelIterator(iterator);
-       ClearMagickWand(magick_wand);
+      PixelSyncIterator(iterator);
+      iterator=DestroyPixelIterator(iterator);
+      ClearMagickWand(magick_wand);
 
-       image++;
-     }
-     fclose ( file );
-   }
-   else {
-     exit(0);
-   }
+      image++;
+    }
+    fclose ( file );
+  }
+  else {
+    exit(0);
+  }
 
+  // calculate histograms
+  //
+  for (j = 0; j < height; j++) {
+    for (k = 0; k < width; k++) {
 
-   // Just prove that the index works, don't actually bother with it until we get a histogram function
-   for (i = 0; i < nImages; i++) {
-     printf("image %d \n ", i);
-     for (j = 0; j < height; j++) {
-       for (k = 0; k < width; k++) {
-         //for (l = 0; l < 3; l++) {d
-         //printf("print: %d %d %d %hhu %hhu %hhu \n", i, j, k, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
-         // }
-       }
-     }
-   }
+      gsl_histogram * r = gsl_histogram_alloc (nImages);
+      gsl_histogram * g = gsl_histogram_alloc (nImages);
+      gsl_histogram * b = gsl_histogram_alloc (nImages);
+
+      gsl_histogram_set_ranges_uniform (r, 0, 255);
+      gsl_histogram_set_ranges_uniform (g, 0, 255);
+      gsl_histogram_set_ranges_uniform (b, 0, 255);
+
+      for (i = 0; i < nImages; i++) {
+
+        gsl_histogram_increment (r, array[i][j][k][0]);
+        gsl_histogram_increment (g, array[i][j][k][1]);
+        gsl_histogram_increment (b, array[i][j][k][2]);
+        //printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
+      }
+      
+    size_t red = gsl_histogram_max_val(r);
+    size_t green = gsl_histogram_max_val(r);
+    size_t blue = gsl_histogram_max_val(r);
+    int red_val = array[red - 1 ][j][k][0];
+    int blue_val = array[blue - 1 ][j][k][1];
+    int green_val = array[green - 1][j][k][2];
+    printf("h:%d w:%d rm: %d gm: %d bm: %d rv: %lu bv: %lu gv:%lu\n",
+    j, k, red_val, green_val, blue_val, red, blue, green);
+
+    gsl_histogram_free (r);
+    gsl_histogram_free (g);
+    gsl_histogram_free (b);
+  
+    }
+  }
 
   MagickWandTerminus();
 
