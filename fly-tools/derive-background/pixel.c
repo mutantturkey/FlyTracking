@@ -7,6 +7,18 @@
 
 #define round(x)((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
+int
+findmax (uint8_t *p, int n)
+{
+   int mx = 0, v = p[0];
+    for (int i = 1; i < n; i++) {
+         if (p[i] > v) {
+                v = p[i];
+                     mx = i;
+                        }
+          }
+     return mx;
+}
 
 int main(int argc, char **argv ) {
 
@@ -29,6 +41,21 @@ int main(int argc, char **argv ) {
   char *temp;
 
   uint8_t ****array;
+
+  // initialize the storage array.
+  array = calloc(nImages, sizeof(array[0]));
+  for(i = 0; i < nImages; i++)
+  {
+    array[i] = calloc(height, sizeof(array[0][0]));
+    for(j = 0; j < height; j++)
+    {
+      array[i][j] = calloc(width, sizeof(array[0][0][0]));
+      for(k = 0; k < width; k++)
+      {
+        array[i][j][k] = calloc(3, sizeof(array[0][0][0][0]));
+      }
+    }
+  }
 
   MagickWandGenesis();
 
@@ -57,20 +84,7 @@ int main(int argc, char **argv ) {
 
   printf("number of imagges: %d \n", nImages);
 
-  // initialize the storage array.
-  array = calloc(nImages, sizeof(array[0]));
-  for(i = 0; i < nImages; i++)
-  {
-    array[i] = calloc(height, sizeof(array[0][0]));
-    for(j = 0; j < height; j++)
-    {
-      array[i][j] = calloc(width, sizeof(array[0][0][0]));
-      for(k = 0; k < width; k++)
-      {
-        array[i][j][k] = calloc(3, sizeof(array[0][0][0][0]));
-      }
-    }
-  }
+
 
   // store each pixel in the storage array. array[nImage][height][width][ { R, G, B} ] 
   FILE *input_file = fopen ( argv[1], "r" );
@@ -96,7 +110,7 @@ int main(int argc, char **argv ) {
           array[image][i][j][0] = round(red*255);
           array[image][i][j][1] = round(green*255);
           array[image][i][j][2] = round(blue*255); 
-          //    printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
+          // printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
         }
         PixelSyncIterator(iterator);
         pixels=PixelGetNextIteratorRow(iterator,&number_wands);
@@ -117,47 +131,29 @@ int main(int argc, char **argv ) {
 
 
   // initialize the output array
-  int output[height][width][3];
+  uint8_t output[200][200][3];
 
   // calculate histograms
 
   for (j = 0; j < height; j++) {
     for (k = 0; k < width; k++) {
 
-      gsl_histogram * r = gsl_histogram_alloc (nImages);
-      gsl_histogram * g = gsl_histogram_alloc (nImages);
-      gsl_histogram * b = gsl_histogram_alloc (nImages);
 
-      gsl_histogram_set_ranges_uniform (r, 0, 255);
-      gsl_histogram_set_ranges_uniform (g, 0, 255);
-      gsl_histogram_set_ranges_uniform (b, 0, 255);
+      uint8_t histr[256] = { 0 }, histg[256] = { 0 }, histb[256] = { 0 };
 
-      for (i = 0; i < nImages; i++) {
-
-        gsl_histogram_increment (r, array[i][j][k][0]);
-        gsl_histogram_increment (g, array[i][j][k][1]);
-        gsl_histogram_increment (b, array[i][j][k][2]);
         //printf("height %d width %d image %d %hhu %hhu %hhu \n", j, k, i, array[i][j][k][0], array[i][j][k][1], array[i][j][k][2]);
+      for (i = 0; i < nImages; i++) {
+        histr[array[i][j][k][0]] += 1;
+        histg[array[i][j][k][1]] += 1;
+        histb[array[i][j][k][2]] += 1;
       }
 
+      output[j][k][0] = findmax(histr, 256);
+      output[j][k][1] = findmax(histg, 256);
+      output[j][k][2] = findmax(histb, 256);
 
-      size_t red = gsl_histogram_max_bin(r);
-      size_t green = gsl_histogram_max_bin(g);
-      size_t blue = gsl_histogram_max_bin(b);
+      printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
 
-      int red_index = gsl_histogram_get(r, red);
-      int green_index = gsl_histogram_get(g, green);
-      int blue_index = gsl_histogram_get(b, blue);
-
-      output[j][k][0] = array[red_index][j][k][0];
-      output[j][k][1] = array[green_index][j][k][1];
-      output[j][k][2] = array[blue_index][j][k][2];
-
-      printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2], array[0 /*red_index - 1*/][j][k][0], array[0 /*green_index - 1*/][j][k][1], array[0 /*blue_index - 1*/][j][k][2]); 
-
-      gsl_histogram_free (r);
-      gsl_histogram_free (g);
-      gsl_histogram_free (b); 
     }
   }
 
@@ -176,13 +172,13 @@ int main(int argc, char **argv ) {
 
   for(x=0;x<height;x++) {
 
-    pixels=PixelGetNextIteratorRow(iterator,&x);
+    pixels=PixelGetNextIteratorRow(iterator,&y);
 
     for(y=0;y<width;y++) {
 
       sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
-      printf("%s \n", rgb);
-      PixelSetColor(pixels[y],rgb);
+      printf("write (%d,%d), %s \n", x ,y, rgb);
+      PixelSetColor(pixels[y],rgb); // this segfaults
     }
 
     PixelSyncIterator(iterator);
