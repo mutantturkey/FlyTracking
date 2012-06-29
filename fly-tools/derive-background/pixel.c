@@ -8,15 +8,14 @@
 #define round(x)((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
 
-
 int main(int argc, char **argv ) {
-
 
   MagickWand *magick_wand;
   MagickWand *first_wand;
 
   double green, red, blue;
   int i,j, k;
+  int x,y;
 
   int image = 0;
   int height = 0;
@@ -26,6 +25,7 @@ int main(int argc, char **argv ) {
   unsigned long number_wands; 
 
   char filename[256];
+  char rgb[128];
   char *temp;
 
   uint8_t ****array;
@@ -37,6 +37,7 @@ int main(int argc, char **argv ) {
   if(MagickReadImage(first_wand, argv[2]) == MagickFalse) {
     ThrowWandException(first_wand);
   }
+
   height =  MagickGetImageHeight(first_wand);
   width =  MagickGetImageWidth(first_wand);
 
@@ -54,8 +55,7 @@ int main(int argc, char **argv ) {
     fclose(count);
   }
 
-  printf("%d \n", nImages);
-
+  printf("number of imagges: %d \n", nImages);
 
   // initialize the storage array.
   array = calloc(nImages, sizeof(array[0]));
@@ -93,10 +93,10 @@ int main(int argc, char **argv ) {
           blue = PixelGetBlue(*pixels);
           red = PixelGetRed(*pixels);
 
-          //    printf("write: %d %d %d \n", round(red*255), round(green*255), round(blue*255));
           array[image][i][j][0] = round(red*255);
           array[image][i][j][1] = round(green*255);
           array[image][i][j][2] = round(blue*255); 
+          //    printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
         }
         PixelSyncIterator(iterator);
         pixels=PixelGetNextIteratorRow(iterator,&number_wands);
@@ -111,7 +111,8 @@ int main(int argc, char **argv ) {
     fclose ( input_file );
   }
   else {
-    exit(0);
+    printf("could not open file \n");
+    exit(1);
   }
 
 
@@ -143,14 +144,16 @@ int main(int argc, char **argv ) {
       size_t red = gsl_histogram_max_bin(r);
       size_t green = gsl_histogram_max_bin(g);
       size_t blue = gsl_histogram_max_bin(b);
+
       int red_index = gsl_histogram_get(r, red);
       int green_index = gsl_histogram_get(g, green);
       int blue_index = gsl_histogram_get(b, blue);
-      output[j][k][0] = array[red_index - 1 ][j][k][0];
-      output[j][k][1] = array[green_index - 1 ][j][k][1];
-      output[j][k][2] = array[blue_index - 1 ][j][k][2];
 
-      printf("i (%d,%d) out(%d,%d,%d) arr(%d, %d, %d)\n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2], array[red_index - 1][j][k][0], array[green_index - 1][j][k][1], array[blue_index - 1][j][k][2]); 
+      output[j][k][0] = array[red_index][j][k][0];
+      output[j][k][1] = array[green_index][j][k][1];
+      output[j][k][2] = array[blue_index][j][k][2];
+
+      printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2], array[0 /*red_index - 1*/][j][k][0], array[0 /*green_index - 1*/][j][k][1], array[0 /*blue_index - 1*/][j][k][2]); 
 
       gsl_histogram_free (r);
       gsl_histogram_free (g);
@@ -162,30 +165,29 @@ int main(int argc, char **argv ) {
   PixelWand *p_wand = NULL;
   PixelIterator *iterator = NULL;
   PixelWand **pixels = NULL;
-  int x,y;
-  char rgb[128];
-
-  MagickWandGenesis();
 
   p_wand = NewPixelWand();
   PixelSetColor(p_wand,"white");
   m_wand = NewMagickWand();
-  // Create a 100x100 image with a default of white
+
   MagickNewImage(m_wand,height,width,p_wand);
-  // Get a new pixel iterator 
+
   iterator=NewPixelIterator(m_wand);
-  for(y=0;y<150;y++) {
-    // Get the next row of the image as an array of PixelWands
+
+  for(x=0;x<height;x++) {
+
     pixels=PixelGetNextIteratorRow(iterator,&x);
-    // Set the row of wands to a simple gray scale gradient
-    for(x=0;x<150;x++) {
-      sprintf(rgb, "rgb(%d,%d,%d)", output[i][j][0], output[i][j][1], output[i][j][2]);
-      PixelSetColor(pixels[x],rgb);
+
+    for(y=0;y<width;y++) {
+
+      sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
+      printf("%s \n", rgb);
+      PixelSetColor(pixels[y],rgb);
     }
-    // Sync writes the pixels back to the m_wand
+
     PixelSyncIterator(iterator);
   }
-  // Clean up
+
   iterator=DestroyPixelIterator(iterator);
   MagickWriteImage(m_wand,"output.png");
   DestroyMagickWand(m_wand);
