@@ -42,23 +42,6 @@ int main(int argc, char **argv ) {
 
   uint8_t ****array;
 
-  // initialize the storage array.
-  array = calloc(nImages, sizeof(array[0]));
-  for(i = 0; i < nImages; i++)
-  {
-    array[i] = calloc(height, sizeof(array[0][0]));
-    for(j = 0; j < height; j++)
-    {
-      array[i][j] = calloc(width, sizeof(array[0][0][0]));
-      for(k = 0; k < width; k++)
-      {
-        array[i][j][k] = calloc(3, sizeof(array[0][0][0][0]));
-      }
-    }
-  }
-
-  MagickWandGenesis();
-
   // open the first image and get the height and width
   first_wand = NewMagickWand();
   if(MagickReadImage(first_wand, argv[2]) == MagickFalse) {
@@ -85,6 +68,22 @@ int main(int argc, char **argv ) {
   printf("number of imagges: %d \n", nImages);
 
 
+  // initialize the storage array.
+  array = calloc(nImages, sizeof(array[0]));
+  for(i = 0; i < nImages; i++)
+  {
+    array[i] = calloc(height, sizeof(array[0][0]));
+    for(j = 0; j < height; j++)
+    {
+      array[i][j] = calloc(width, sizeof(array[0][0][0]));
+      for(k = 0; k < width; k++)
+      {
+        array[i][j][k] = calloc(3, sizeof(array[0][0][0][0]));
+      }
+    }
+  }
+
+  MagickWandGenesis();
 
   // store each pixel in the storage array. array[nImage][height][width][ { R, G, B} ] 
   FILE *input_file = fopen ( argv[1], "r" );
@@ -166,7 +165,7 @@ int main(int argc, char **argv ) {
   PixelSetColor(p_wand,"white");
   m_wand = NewMagickWand();
 
-  MagickNewImage(m_wand,height,width,p_wand);
+  MagickNewImage(m_wand,width,height,p_wand);
 
   iterator=NewPixelIterator(m_wand);
 
