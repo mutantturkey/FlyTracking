@@ -24,17 +24,15 @@ int main(int argc, char **argv ) {
 
   MagickWand *magick_wand;
   MagickWand *first_wand;
+  PixelIterator* iterator;
+  PixelWand **pixels;
 
   double green, red, blue;
-  int i,j, k;
-  int x,y;
-
+  int i,j, k, x, y;
   int image = 0;
-  int height = 0;
-  int width = 0;
+  unsigned long height, width;
   int nImages = 0;
 
-  unsigned long number_wands; 
 
   char filename[256];
   char rgb[128];
@@ -53,7 +51,7 @@ int main(int argc, char **argv ) {
 
   first_wand =  DestroyMagickWand(first_wand);
 
-  printf("height: %d width:%d \n", height, width);
+  printf("height: %ld width:%ld \n", height, width);
 
 
   // count how many images there are in the input file
@@ -73,7 +71,7 @@ int main(int argc, char **argv ) {
   for(i = 0; i < nImages; i++)
   {
     array[i] = calloc(height, sizeof(array[0][0]));
-    for(j = 0; j < height; j++)
+    for(j = 0; j < (long) height; j++)
     {
       array[i][j] = calloc(width, sizeof(array[0][0][0]));
       for(k = 0; k < width; k++)
@@ -95,16 +93,16 @@ int main(int argc, char **argv ) {
       magick_wand = NewMagickWand();
       MagickReadImage(magick_wand, filename);
 
-      PixelIterator* iterator = NewPixelIterator(magick_wand);
+      iterator = NewPixelIterator(magick_wand);
 
-      PixelWand **pixels = PixelGetNextIteratorRow(iterator,&number_wands);
       printf("Image number:%d Filename: %s \n", image, filename);
-      for (i=0; pixels != (PixelWand **) NULL; i++) {
-        for (j=0; j<number_wands; j++) {
+      for (i=0; i<height; i++) {
+        pixels = PixelGetNextIteratorRow(iterator, &width);
+        for (j=0; j<width ; j++) {
 
-          green = PixelGetGreen(*pixels);
-          blue = PixelGetBlue(*pixels);
-          red = PixelGetRed(*pixels);
+          green = PixelGetGreen(pixels[j]);
+          blue = PixelGetBlue(pixels[j]);
+          red = PixelGetRed(pixels[j]);
 
           array[image][i][j][0] = round(red*255);
           array[image][i][j][1] = round(green*255);
@@ -112,7 +110,6 @@ int main(int argc, char **argv ) {
           // printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
         }
         PixelSyncIterator(iterator);
-        pixels=PixelGetNextIteratorRow(iterator,&number_wands);
       }
 
       PixelSyncIterator(iterator);
@@ -158,8 +155,8 @@ int main(int argc, char **argv ) {
 
   MagickWand *m_wand = NULL;
   PixelWand *p_wand = NULL;
-  PixelIterator *iterator = NULL;
-  PixelWand **pixels = NULL;
+  iterator = NULL;
+  *pixels = NULL;
 
   p_wand = NewPixelWand();
   PixelSetColor(p_wand,"white");
