@@ -47,6 +47,5 @@ Usage:
 
 Todo:
 
-* implement getops,
 * reduce memory - zlib? less pointers?
 
