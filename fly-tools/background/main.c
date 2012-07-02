@@ -4,8 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
-//#define round(x)((x)>=0?(int)((x)+0.5):(int)((x)-0.5))
 #define round(x)((int)((x)+0.5))
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
 
@@ -22,6 +22,37 @@ int findmax (uint8_t *p, int n)
 }
 
 int main(int argc, char **argv ) {
+
+  char *usage = "derive-background -i <input-list> -s <sample-file> -o <output-filename>";
+  char *sample_file = NULL;
+  char *output_file = NULL;
+  char *image_list = NULL;
+  int c;
+  int opterr = 0;
+
+  while ((c = getopt (argc, argv, "s:i:o:h")) != -1)
+    switch (c) {
+      case 's':
+        sample_file = optarg;
+        break;
+      case 'i':
+        image_list = optarg;
+        break;
+      case 'o':
+        output_file = optarg;
+        break;
+      case 'h':
+        puts(usage);
+        exit(1);
+        break;
+      default:
+        break;
+    }
+
+  if( sample_file == NULL || image_list == NULL || output_file == NULL ) {
+    puts(usage);
+    exit(1);
+  }
 
   MagickWand *magick_wand, *first_wand, *output_wand;
   PixelIterator *input_iterator, *output_iterator;
@@ -47,7 +78,7 @@ int main(int argc, char **argv ) {
 
   // open the first image and get the height and width
   first_wand = NewMagickWand();
-  if(MagickReadImage(first_wand, argv[2]) == MagickFalse) {
+  if(MagickReadImage(first_wand, sample_file) == MagickFalse) {
     ThrowWandException(first_wand);
   }
 
@@ -60,7 +91,7 @@ int main(int argc, char **argv ) {
 
 
   // count how many images there are in the input file
-  FILE *count = fopen( argv[1], "r");
+  FILE *count = fopen( image_list, "r");
   if(count != NULL) {  
     while((fgets(filename, sizeof(filename), count)) != NULL) {
       nImages++;
@@ -94,7 +125,7 @@ int main(int argc, char **argv ) {
   MagickWandGenesis();
 
   // store each pixel in the storage array. array[nImage][height][width][ { R, G, B} ] 
-  input_file = fopen ( argv[1], "r" );
+  input_file = fopen ( image_list, "r" );
   if ( input_file != NULL ) {
     while ((fgets(filename, sizeof(filename), input_file)) != NULL ) {
       temp = strchr(filename, '\n');
@@ -176,7 +207,7 @@ int main(int argc, char **argv ) {
   }
 
   output_iterator=DestroyPixelIterator(output_iterator);
-  MagickWriteImage(output_wand,"output.png");
+  MagickWriteImage(output_wand, output_file);
   DestroyMagickWand(output_wand);
 
   MagickWandTerminus();
