@@ -45,3 +45,8 @@ Usage:
 
   derive-background -i <input-list> -s <sample-file> -o <output-filename> 
 
+Todo:
+
+* implement getops,
+* reduce memory - zlib? less pointers?
+
