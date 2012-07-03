@@ -186,7 +186,7 @@ int main(int argc, char **argv ) {
         output[j][k][1] = findmax(histg, 256);
         output[j][k][2] = findmax(histb, 256);
 
-        printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+        //printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
 
       }
     }
@@ -209,17 +209,18 @@ int main(int argc, char **argv ) {
         }
 
 
-        size_t red = gsl_histogram_max_val(r);
-        size_t green = gsl_histogram_max_val(r);
-        size_t blue = gsl_histogram_max_val(r);
-        output[j][k][0] = array[red][j][k][0];
-        output[j][k][1] = array[blue][j][k][1];
-        output[j][k][2] = array[green][j][k][2];
+        int red = gsl_histogram_max_val(r);
+        int green = gsl_histogram_max_val(g);
+        int blue = gsl_histogram_max_val(b);
+
+        output[j][k][0] = red;
+        output[j][k][1] = blue;
+        output[j][k][2] = green;
 
         gsl_histogram_free (r);
         gsl_histogram_free (g);
         gsl_histogram_free (b);
-        printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+        //printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
 
       }
     }
