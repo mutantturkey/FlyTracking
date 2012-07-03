@@ -18,30 +18,27 @@ char *output_folder = NULL;
 
 void convert_image(char *file) {
 
-	MagickWand *mask = NewMagickWand();
-	char *output_name = malloc(256);
-	if(MagickReadImage(mask, file) == MagickFalse) {
-  ThrowWandException(mask);
-	 return;
+  MagickWand *mask = NewMagickWand();
+  char *output_name = malloc(256);
+  if(MagickReadImage(mask, file) == MagickFalse) {
+    ThrowWandException(mask);
+    return;
   }
 
-  // convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
-
   MagickCompositeImage(mask, background, DifferenceCompositeOp, 0, 0);
-//	MagickContrastStretchImage(mask, 90000, 0);
   MagickAutoLevelImage(mask); 
-	MagickThresholdImage(mask, 30000);
+  MagickThresholdImage(mask, 30000);
 
-	sprintf(output_name, "%s%s", output_folder, basename(file));
+  sprintf(output_name, "%s%s", output_folder, basename(file));
   if(MagickWriteImages(mask, output_name, MagickTrue) == MagickFalse) {
-		ThrowWandException(mask);
-	}
+    ThrowWandException(mask);
+  }
 
-	mask = DestroyMagickWand(mask);
+  mask = DestroyMagickWand(mask);
 
-	printf("output written to: %s \n", output_name);
-	free(output_name);
-	free(file);
+  printf("output written to: %s \n", output_name);
+  free(output_name);
+  free(file);
 }
 
 int main( int argc, char **argv){
@@ -70,48 +67,48 @@ int main( int argc, char **argv){
         exit(1);
         break;
       default:
-      break;
-}
+        break;
+    }
 
   if( background_file == NULL || image_list == NULL || output_folder == NULL ) {
     puts(usage);
     exit(1);
-	}
-	MagickBooleanType   status;
+  }
+  MagickBooleanType   status;
   MagickWandGenesis();
 
   background = NewMagickWand();
 
   status=MagickReadImage(background, background_file);
   if (status == MagickFalse) {
-		puts("background could not load error");
-		exit(0);
-	}
+    puts("background could not load error");
+    exit(0);
+  }
 
-	thpool_t* threadpool;             /* make a new thread pool structure     */
-	threadpool=thpool_init(4);        /* initialise it to 4 number of threads */
+  thpool_t* threadpool;             /* make a new thread pool structure     */
+  threadpool=thpool_init(4);        /* initialise it to 4 number of threads */
 
-	char filename[256];	
-	char *temp;
-	FILE *f = fopen ( image_list, "r" );
-	if ( f != NULL ) {
-		while ( fgets ( filename, sizeof(filename), f ) != NULL ) {
-			temp = strchr(filename, '\n');
+  char filename[256];	
+  char *temp;
+  FILE *f = fopen ( image_list, "r" );
+  if ( f != NULL ) {
+    while ( fgets ( filename, sizeof(filename), f ) != NULL ) {
+      temp = strchr(filename, '\n');
       if (temp != NULL) *temp = '\0'; 
-			char *filename_r = malloc(256);
-			strncpy(filename_r, filename, sizeof(filename));
-			printf("add work: %s \n", filename);
+      char *filename_r = malloc(256);
+      strncpy(filename_r, filename, sizeof(filename));
+      printf("add work: %s \n", filename);
 
-			thpool_add_work(threadpool, (void*)convert_image, (void*)filename_r);
-		}
-	fclose ( f );
-	}
-	else {
-		exit(0);
-	}
-	
+      thpool_add_work(threadpool, (void*)convert_image, (void*)filename_r);
+    }
+    fclose ( f );
+  }
+  else {
+    exit(0);
+  }
+
   puts("Will kill threadpool");
-	thpool_destroy(threadpool);
+  thpool_destroy(threadpool);
   MagickWandTerminus();
-	return 0;
+  return 0;
 }

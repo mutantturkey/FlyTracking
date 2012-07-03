@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
+#include <stdbool.h>
 #define round(x)((int)((x)+0.5))
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
 
@@ -27,10 +27,11 @@ int main(int argc, char **argv ) {
   char *sample_file = NULL;
   char *output_file = NULL;
   char *image_list = NULL;
+  bool histogram = false;
   int c;
   int opterr = 0;
 
-  while ((c = getopt (argc, argv, "s:i:o:h")) != -1)
+  while ((c = getopt (argc, argv, "s:i:o:mh")) != -1)
     switch (c) {
       case 's':
         sample_file = optarg;
@@ -40,6 +41,9 @@ int main(int argc, char **argv ) {
         break;
       case 'o':
         output_file = optarg;
+        break;
+      case 'm':
+        histogram = true;
         break;
       case 'h':
         puts(usage);
@@ -167,24 +171,65 @@ int main(int argc, char **argv ) {
 
   // calculate histograms
 
-  for (j = 0; j < height; j++) {
-    for (k = 0; k < width; k++) {
+  if (!histogram) { 
+    for (j = 0; j < height; j++) {
+      for (k = 0; k < width; k++) {
 
-      uint8_t histr[256] = { 0 }, histg[256] = { 0 }, histb[256] = { 0 };
-      for (i = 0; i < nImages; i++) {
-        histr[array[i][j][k][0]] += 1;
-        histg[array[i][j][k][1]] += 1;
-        histb[array[i][j][k][2]] += 1;
+        uint8_t histr[256] = { 0 }, histg[256] = { 0 }, histb[256] = { 0 };
+        for (i = 0; i < nImages; i++) {
+          histr[array[i][j][k][0]] += 1;
+          histg[array[i][j][k][1]] += 1;
+          histb[array[i][j][k][2]] += 1;
+        }
+
+        output[j][k][0] = findmax(histr, 256);
+        output[j][k][1] = findmax(histg, 256);
+        output[j][k][2] = findmax(histb, 256);
+
+        printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+
       }
+    }
+  } else {
+    for (j = 0; j < height; j++) {
+      for (k = 0; k < width; k++) {
+        
+        gsl_histogram * r = gsl_histogram_alloc (nImages);
+        gsl_histogram * g = gsl_histogram_alloc (nImages);
+        gsl_histogram * b = gsl_histogram_alloc (nImages);
 
-      output[j][k][0] = findmax(histr, 256);
-      output[j][k][1] = findmax(histg, 256);
-      output[j][k][2] = findmax(histb, 256);
+        gsl_histogram_set_ranges_uniform (r, 0, 255);
+        gsl_histogram_set_ranges_uniform (g, 0, 255);
+        gsl_histogram_set_ranges_uniform (b, 0, 255);
 
-      printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+        for (i = 0; i < nImages; i++) {
+          gsl_histogram_increment (r, array[i][j][k][0]);
+          gsl_histogram_increment (g, array[i][j][k][1]);
+          gsl_histogram_increment (b, array[i][j][k][2]);
+        }
 
+
+        size_t red = gsl_histogram_max_val(r);
+        size_t green = gsl_histogram_max_val(r);
+        size_t blue = gsl_histogram_max_val(r);
+        output[j][k][0] = array[red][j][k][0];
+        output[j][k][1] = array[blue][j][k][1];
+        output[j][k][2] = array[green][j][k][2];
+
+        gsl_histogram_free (r);
+        gsl_histogram_free (g);
+        gsl_histogram_free (b);
+        printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
+
+      }
     }
   }
+  pixels = NewPixelWand();
+  p_out = NewPixelWand();
+  PixelSetColor(p_out,"white");
+
+  output_wand = NewMagickWand();
+  MagickNewImage(output_wand,width,height,p_out);
 
   pixels = NewPixelWand();
   p_out = NewPixelWand();
