@@ -82,7 +82,7 @@ int main(int argc, char **argv ) {
     printf("could not open file \n");
     exit(1);
   }
-  rewind(input_file);
+  fclose(input_file);
 
   first_wand = NewMagickWand();
   if(MagickReadImage(first_wand, filename) == MagickFalse) {
@@ -97,10 +97,11 @@ int main(int argc, char **argv ) {
   printf("height: %d width:%d \n", height, width);
 
   // count number of images we have in the file
+  input_file = fopen( image_list, "r");
   while((fgets(filename, sizeof(filename), input_file)) != NULL) {
     nImages++;
   }
-  rewind(input_file);
+  fclose(input_file);
 
   printf("number of images: %d \n", nImages);
 
@@ -121,7 +122,6 @@ int main(int argc, char **argv ) {
     printf("error could not open input file");
     exit(1);
   }
-  
 
   while ((fgets(filename, sizeof(filename), input_file)) != NULL ) {
     
