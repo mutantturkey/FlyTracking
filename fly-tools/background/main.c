@@ -6,11 +6,16 @@
 #include <string.h>
 #include <unistd.h>
 #include <stdbool.h>
+
 #define round(x)((int)((x)+0.5))
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
+#define array(i,j,k,l) (array[height*width*i + width*j + k + l])
 
-int findmax (uint8_t *p, int n)
-{
+int nImages;
+unsigned long height;
+unsigned long width;
+
+int findmax (uint8_t *p, int n) {
   int mx = 0, v = p[0];
   for (int i = 1; i < n; i++) {
     if (p[i] > v) {
@@ -27,11 +32,9 @@ int main(int argc, char **argv ) {
   char *sample_file = NULL;
   char *output_file = NULL;
   char *image_list = NULL;
-  bool histogram = false;
   int c;
-  int opterr = 0;
 
-  while ((c = getopt (argc, argv, "s:i:o:mh")) != -1)
+  while ((c = getopt (argc, argv, "s:i:o:h")) != -1)
     switch (c) {
       case 's':
         sample_file = optarg;
@@ -41,9 +44,6 @@ int main(int argc, char **argv ) {
         break;
       case 'o':
         output_file = optarg;
-        break;
-      case 'm':
-        histogram = true;
         break;
       case 'h':
         puts(usage);
@@ -58,7 +58,7 @@ int main(int argc, char **argv ) {
     exit(1);
   }
 
-  MagickWand *magick_wand, *first_wand, *output_wand;
+  MagickWand *input_wand, *first_wand, *output_wand;
   PixelIterator *input_iterator, *output_iterator;
   PixelWand **pixels, *p_out;
 
@@ -66,10 +66,6 @@ int main(int argc, char **argv ) {
 
   int i,j, k, x, y;
   int image = 0;
-  int nImages = 0;
-
-  unsigned long height, width;
-
 
   char filename[256];
   char rgb[128];
@@ -77,8 +73,9 @@ int main(int argc, char **argv ) {
 
   FILE *input_file;
 
-  uint8_t ****array;
   uint8_t ***output;
+
+  MagickWandGenesis();
 
   // open the first image and get the height and width
   first_wand = NewMagickWand();
@@ -86,13 +83,12 @@ int main(int argc, char **argv ) {
     ThrowWandException(first_wand);
   }
 
-  height =  MagickGetImageHeight(first_wand);
-  width =  MagickGetImageWidth(first_wand);
+  int  height =  MagickGetImageHeight(first_wand);
+  int width =  MagickGetImageWidth(first_wand);
 
   first_wand =  DestroyMagickWand(first_wand);
 
-  printf("height: %ld width:%ld \n", height, width);
-
+  printf("height: %d width:%d \n", height, width);
 
   // count how many images there are in the input file
   FILE *count = fopen( image_list, "r");
@@ -105,6 +101,7 @@ int main(int argc, char **argv ) {
 
   printf("number of images: %d \n", nImages);
 
+  uint8_t * array = (uint8_t *)malloc(nImages*height*width*3*sizeof(uint8_t));
 
   // initialize the storage arrays
   output = calloc(height, sizeof(output[0]));
@@ -115,19 +112,6 @@ int main(int argc, char **argv ) {
     }
   }
 
-  array = calloc(nImages, sizeof(array[0]));
-  for(i = 0; i < nImages; i++) {
-    array[i] = calloc(height, sizeof(array[0][0]));
-    for(j = 0; j < (long) height; j++) {
-      array[i][j] = calloc(width, sizeof(array[0][0][0]));
-      for(k = 0; k < width; k++){
-        array[i][j][k] = calloc(3, sizeof(array[0][0][0][0]));
-      }
-    }
-  }
-
-  MagickWandGenesis();
-
   // store each pixel in the storage array. array[nImage][height][width][ { R, G, B} ] 
   input_file = fopen ( image_list, "r" );
   if ( input_file != NULL ) {
@@ -135,10 +119,10 @@ int main(int argc, char **argv ) {
       temp = strchr(filename, '\n');
       if (temp != NULL) *temp = '\0';
 
-      magick_wand = NewMagickWand();
-      MagickReadImage(magick_wand, filename);
+      input_wand = NewMagickWand();
+      MagickReadImage(input_wand, filename);
 
-      input_iterator = NewPixelIterator(magick_wand);
+      input_iterator = NewPixelIterator(input_wand);
 
       printf("Image number:%d Filename: %s \n", image, filename);
       for (i=0; i<height; i++) {
@@ -149,16 +133,16 @@ int main(int argc, char **argv ) {
           blue = PixelGetBlue(pixels[j]);
           red = PixelGetRed(pixels[j]);
 
-          array[image][i][j][0] = round(red*255);
-          array[image][i][j][1] = round(green*255);
-          array[image][i][j][2] = round(blue*255); 
+          array(image,i,j,0) = round(red*255);
+          array(image,i,j,1) = round(green*255);
+          array(image,i,j,2) = round(blue*255); 
           // printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
         }
         PixelSyncIterator(input_iterator);
       }
       PixelSyncIterator(input_iterator);
       input_iterator=DestroyPixelIterator(input_iterator);
-      ClearMagickWand(magick_wand);
+      ClearMagickWand(input_wand);
 
       image++;
     }
@@ -171,66 +155,29 @@ int main(int argc, char **argv ) {
 
   // calculate histograms
 
-  if (!histogram) { 
-    for (j = 0; j < height; j++) {
-      for (k = 0; k < width; k++) {
+  for (j = 0; j < height; j++) {
+    for (k = 0; k < width; k++) {
 
-        uint8_t histr[256] = { 0 }, histg[256] = { 0 }, histb[256] = { 0 };
-        for (i = 0; i < nImages; i++) {
-          histr[array[i][j][k][0]] += 1;
-          histg[array[i][j][k][1]] += 1;
-          histb[array[i][j][k][2]] += 1;
-        }
+      uint8_t red_histogram[255] = { 0 };
+      uint8_t blue_histogram[255] = { 0 };
+      uint8_t green_histogram[255] = { 0 };
 
-        output[j][k][0] = findmax(histr, 256);
-        output[j][k][1] = findmax(histg, 256);
-        output[j][k][2] = findmax(histb, 256);
-
-        //printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
-
+      for (i = 0; i < nImages; i++) {
+        red_histogram[array(i,j,k,0)] += 1;
+        blue_histogram[array(i,j,k,1)] += 1;
+        green_histogram[array(i,j,k,2)] += 1;
       }
-    }
-  } else {
-    for (j = 0; j < height; j++) {
-      for (k = 0; k < width; k++) {
-        
-        gsl_histogram * r = gsl_histogram_alloc (nImages);
-        gsl_histogram * g = gsl_histogram_alloc (nImages);
-        gsl_histogram * b = gsl_histogram_alloc (nImages);
 
-        gsl_histogram_set_ranges_uniform (r, 0, 255);
-        gsl_histogram_set_ranges_uniform (g, 0, 255);
-        gsl_histogram_set_ranges_uniform (b, 0, 255);
+      int red_val = findmax(red_histogram, 255);
+      int blue_val = findmax(blue_histogram, 255);
+      int green_val = findmax(green_histogram, 255);
 
-        for (i = 0; i < nImages; i++) {
-          gsl_histogram_increment (r, array[i][j][k][0]);
-          gsl_histogram_increment (g, array[i][j][k][1]);
-          gsl_histogram_increment (b, array[i][j][k][2]);
-        }
+      output[j][k][0] = (int)red_val;
+      output[j][k][1] = (int)blue_val;
+      output[j][k][2] = (int)green_val;
 
-
-        int red = gsl_histogram_max_val(r);
-        int green = gsl_histogram_max_val(g);
-        int blue = gsl_histogram_max_val(b);
-
-        output[j][k][0] = red;
-        output[j][k][1] = blue;
-        output[j][k][2] = green;
-
-        gsl_histogram_free (r);
-        gsl_histogram_free (g);
-        gsl_histogram_free (b);
-        //printf("out (%d,%d,%d,%d,%d) \n ", j, k, output[j][k][0], output[j][k][1], output[j][k][2]); 
-
-      }
     }
   }
-  pixels = NewPixelWand();
-  p_out = NewPixelWand();
-  PixelSetColor(p_out,"white");
-
-  output_wand = NewMagickWand();
-  MagickNewImage(output_wand,width,height,p_out);
 
   pixels = NewPixelWand();
   p_out = NewPixelWand();
@@ -247,7 +194,7 @@ int main(int argc, char **argv ) {
     for(y=0;y<width;y++) {
       sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
       printf("write (%d,%d), %s \n", x ,y, rgb);
-      PixelSetColor(pixels[y],rgb); 
+      PixelSetColor(pixels[y],rgb);
     }
     PixelSyncIterator(output_iterator);
   }
@@ -257,6 +204,5 @@ int main(int argc, char **argv ) {
   DestroyMagickWand(output_wand);
 
   MagickWandTerminus();
-
   return 0;
 }
