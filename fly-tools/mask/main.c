@@ -1,14 +1,14 @@
 // Calvin Morrison Copyright 2012 
-
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <stdlib.h> 
 #include <libgen.h>
-#include <wand/MagickWand.h> 
 
+#include <wand/MagickWand.h> 
 #include <wand/composite.h> 
 #include <wand/convert.h> 
+
 #include "thpool.h"
 
 #define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
@@ -47,7 +47,6 @@ int main( int argc, char **argv){
   char *background_file = NULL;
   char *image_list = NULL;
   int c;
-  opterr = 0;
 
   while ((c = getopt (argc, argv, "b:i:o:hv")) != -1)
     switch (c) {
@@ -74,19 +73,17 @@ int main( int argc, char **argv){
     puts(usage);
     exit(1);
   }
-  MagickBooleanType   status;
   MagickWandGenesis();
 
   background = NewMagickWand();
 
-  status=MagickReadImage(background, background_file);
-  if (status == MagickFalse) {
+  if(MagickReadImage(background, background_file) == MagickFalse) {
     puts("background could not load error");
     exit(0);
   }
 
-  thpool_t* threadpool;             /* make a new thread pool structure     */
-  threadpool=thpool_init(4);        /* initialise it to 4 number of threads */
+  thpool_t* threadpool;        
+  threadpool=thpool_init(4);
 
   char filename[256];	
   char *temp;
