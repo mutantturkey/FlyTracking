@@ -59,7 +59,7 @@ int main(int argc, char **argv ) {
 
   double green, red, blue;
 
-  int i,j, k, x, y;
+  int i,j, k;
   int image = 0;
 
   char filename[256];
@@ -104,7 +104,6 @@ int main(int argc, char **argv ) {
 
   printf("number of images: %d \n", nImages);
 
-
   // initialize the storage arrays
   uint8_t * array = (uint8_t *)malloc(nImages*height*width*3*sizeof(uint8_t));
 
@@ -117,7 +116,15 @@ int main(int argc, char **argv ) {
   }
 
   // store each pixel in the storage array. array(nImages,height,width,{ R, G, B} ) 
+  input_file = fopen( image_list, "r");
+  if(input_file == NULL ) {
+    printf("error could not open input file");
+    exit(1);
+  }
+  
+
   while ((fgets(filename, sizeof(filename), input_file)) != NULL ) {
+    
     temp = strchr(filename, '\n');
     if (temp != NULL) *temp = '\0';
 
@@ -148,6 +155,8 @@ int main(int argc, char **argv ) {
 
     image++;
   }
+
+  fclose(input_file);
 
   // calculate histograms
 
@@ -183,14 +192,14 @@ int main(int argc, char **argv ) {
   MagickNewImage(output_wand,width,height,p_out);
 
   output_iterator=NewPixelIterator(output_wand);
-  for(x=0;x<height;x++) {
+  for(i=0; i<height; i++) {
 
-    pixels=PixelGetNextIteratorRow(output_iterator,&y);
+    pixels=PixelGetNextIteratorRow(output_iterator,&j);
 
-    for(y=0;y<width;y++) {
-      sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
-      //printf("write (%d,%d), %s \n", x ,y, rgb);
-      PixelSetColor(pixels[y],rgb);
+    for(j=0;j<width;j++) {
+      sprintf(rgb, "rgb(%d,%d,%d)", output[i][j][0], output[i][j][1], output[i][j][2]);
+      //printf("write (%d,%d), %s \n", i ,y, rgb);
+      PixelSetColor(pixels[j],rgb);
     }
     PixelSyncIterator(output_iterator);
   }
