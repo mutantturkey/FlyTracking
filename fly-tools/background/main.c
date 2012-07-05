@@ -1,5 +1,4 @@
 #include <wand/MagickWand.h>
-#include <gsl/gsl_histogram.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -29,16 +28,12 @@ int findmax (uint8_t *p, int n) {
 int main(int argc, char **argv ) {
 
   char *usage = "derive-background -i <input-list> -s <sample-file> -o <output-filename>";
-  char *sample_file = NULL;
   char *output_file = NULL;
   char *image_list = NULL;
   int c;
 
-  while ((c = getopt (argc, argv, "s:i:o:h")) != -1)
+  while ((c = getopt (argc, argv, "i:o:h")) != -1)
     switch (c) {
-      case 's':
-        sample_file = optarg;
-        break;
       case 'i':
         image_list = optarg;
         break;
@@ -53,7 +48,7 @@ int main(int argc, char **argv ) {
         break;
     }
 
-  if( sample_file == NULL || image_list == NULL || output_file == NULL ) {
+  if( image_list == NULL || output_file == NULL ) {
     puts(usage);
     exit(1);
   }
@@ -77,33 +72,42 @@ int main(int argc, char **argv ) {
 
   MagickWandGenesis();
 
-  // open the first image and get the height and width
-  first_wand = NewMagickWand();
-  if(MagickReadImage(first_wand, sample_file) == MagickFalse) {
-    ThrowWandException(first_wand);
+  // open first image in input_file to deterimine the height and width
+  input_file = fopen( image_list, "r");
+  if(input_file != NULL) {  
+    fgets(filename, sizeof(filename), input_file);
+    temp = strchr(filename, '\n');
+    if (temp != NULL) *temp = '\0';
+  } else {
+    printf("could not open file \n");
+    exit(1);
   }
+  rewind(input_file);
 
-  int  height =  MagickGetImageHeight(first_wand);
+  first_wand = NewMagickWand();
+  if(MagickReadImage(first_wand, filename) == MagickFalse) {
+    ThrowWandException(first_wand);
+  } 
+
+  int height =  MagickGetImageHeight(first_wand);
   int width =  MagickGetImageWidth(first_wand);
 
   first_wand =  DestroyMagickWand(first_wand);
 
   printf("height: %d width:%d \n", height, width);
 
-  // count how many images there are in the input file
-  FILE *count = fopen( image_list, "r");
-  if(count != NULL) {  
-    while((fgets(filename, sizeof(filename), count)) != NULL) {
-      nImages++;
-    }
-    fclose(count);
+  // count number of images we have in the file
+  while((fgets(filename, sizeof(filename), input_file)) != NULL) {
+    nImages++;
   }
+  rewind(input_file);
 
   printf("number of images: %d \n", nImages);
 
-  uint8_t * array = (uint8_t *)malloc(nImages*height*width*3*sizeof(uint8_t));
 
   // initialize the storage arrays
+  uint8_t * array = (uint8_t *)malloc(nImages*height*width*3*sizeof(uint8_t));
+
   output = calloc(height, sizeof(output[0]));
   for(i = 0; i < height; i++) {
     output[i] = calloc(width, sizeof(output[0][0]));
@@ -112,45 +116,37 @@ int main(int argc, char **argv ) {
     }
   }
 
-  // store each pixel in the storage array. array[nImage][height][width][ { R, G, B} ] 
-  input_file = fopen ( image_list, "r" );
-  if ( input_file != NULL ) {
-    while ((fgets(filename, sizeof(filename), input_file)) != NULL ) {
-      temp = strchr(filename, '\n');
-      if (temp != NULL) *temp = '\0';
+  // store each pixel in the storage array. array(nImages,height,width,{ R, G, B} ) 
+  while ((fgets(filename, sizeof(filename), input_file)) != NULL ) {
+    temp = strchr(filename, '\n');
+    if (temp != NULL) *temp = '\0';
 
-      input_wand = NewMagickWand();
-      MagickReadImage(input_wand, filename);
+    input_wand = NewMagickWand();
+    MagickReadImage(input_wand, filename);
 
-      input_iterator = NewPixelIterator(input_wand);
+    input_iterator = NewPixelIterator(input_wand);
 
-      printf("Image number:%d Filename: %s \n", image, filename);
-      for (i=0; i<height; i++) {
-        pixels = PixelGetNextIteratorRow(input_iterator, &width);
-        for (j=0; j<width ; j++) {
+    printf("Image number:%d Filename: %s \n", image, filename);
+    for (i=0; i<height; i++) {
+      pixels = PixelGetNextIteratorRow(input_iterator, &width);
+      for (j=0; j<width ; j++) {
 
-          green = PixelGetGreen(pixels[j]);
-          blue = PixelGetBlue(pixels[j]);
-          red = PixelGetRed(pixels[j]);
+        green = PixelGetGreen(pixels[j]);
+        blue = PixelGetBlue(pixels[j]);
+        red = PixelGetRed(pixels[j]);
 
-          array(image,i,j,0) = round(red*255);
-          array(image,i,j,1) = round(green*255);
-          array(image,i,j,2) = round(blue*255); 
-          // printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
-        }
-        PixelSyncIterator(input_iterator);
+        array(image,i,j,0) = round(red*255);
+        array(image,i,j,1) = round(green*255);
+        array(image,i,j,2) = round(blue*255); 
+        // printf("array: (%d, %d,%d,%d,%d,%d) \n", image, i, j, array[image][i][j][0], array[image][i][j][1], array[image][i][j][2]);
       }
       PixelSyncIterator(input_iterator);
-      input_iterator=DestroyPixelIterator(input_iterator);
-      ClearMagickWand(input_wand);
-
-      image++;
     }
-    fclose ( input_file );
-  }
-  else {
-    printf("could not open file \n");
-    exit(1);
+    PixelSyncIterator(input_iterator);
+    input_iterator=DestroyPixelIterator(input_iterator);
+    ClearMagickWand(input_wand);
+
+    image++;
   }
 
   // calculate histograms
@@ -193,7 +189,7 @@ int main(int argc, char **argv ) {
 
     for(y=0;y<width;y++) {
       sprintf(rgb, "rgb(%d,%d,%d)", output[x][y][0], output[x][y][1], output[x][y][2]);
-      printf("write (%d,%d), %s \n", x ,y, rgb);
+      //printf("write (%d,%d), %s \n", x ,y, rgb);
       PixelSetColor(pixels[y],rgb);
     }
     PixelSyncIterator(output_iterator);
