@@ -10,6 +10,43 @@ vector<double> currentHistogramValues;
 
 int main(int argc, char* argv[]) {
 
+  int c;	
+  string usage = "standard-deviation -l <list-of-files> -i <input-path> -o <output-file> -t <type>";
+  char *inputFileListName;
+  char *inputPath;
+  char *outputFileName;
+  char *distributionType;
+  string inputFileList;
+
+  while ((c = getopt (argc, argv, "i:o:l:t:h")) != -1)
+    switch (c)
+    {
+      case 'l':
+        inputFileListName = optarg;
+        break;
+      case 'i':
+        inputPath = optarg;
+        break;
+      case 'o':
+        outputFileName = optarg;
+        break;
+      case 't':
+        distributionType = optarg;
+        break;
+      case 'h':
+        cout << usage << endl;
+        exit(1);
+        break;
+      default:
+        break;
+    }
+
+//  if( (inputFileListName == NULL) || (inputPath == NULL) || (distributionType == NULL) || (outputFileName == NULL) ) {
+//    cerr << usage << endl;
+//    exit(1);
+//  }	
+
+
   // argv[1] input file containing the list of files
   // argv[2] output file containing the standard deviation and file name pair
   // argv[3] data file path
@@ -20,10 +57,10 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  ifstream inputFileNames(argv[1]);
-  ofstream outputFile(argv[2]);
-  string prefixPath(argv[3]);
-  string metricName(argv[4]);
+  ifstream inputFileNames(inputFileListName);
+  ofstream outputFile(outputFileName);
+  string prefixPath(inputPath);
+  string metricName(distributionType);
 
   if (inputFileNames.fail() == true) {
     cout << "Input File can not be opened"<<endl;
@@ -75,7 +112,6 @@ int main(int argc, char* argv[]) {
     }
 
     // standard deviation
-
     standardDev = sumSquaredResults/(N-1);
     standardDev = sqrt(standardDev);
 
