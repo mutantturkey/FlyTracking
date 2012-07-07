@@ -12,10 +12,10 @@ int main(int argc, char* argv[]) {
 
   int c;	
   string usage = "standard-deviation -l <list-of-files> -i <input-path> -o <output-file> -t <type>";
-  char *inputFileListName;
-  char *inputPath;
-  char *outputFileName;
-  char *distributionType;
+  string inputFileListName;
+  string inputPath;
+  string outputFileName;
+  string distributionType;
   string inputFileList;
 
   while ((c = getopt (argc, argv, "i:o:l:t:h")) != -1)
@@ -41,10 +41,10 @@ int main(int argc, char* argv[]) {
         break;
     }
 
-//  if( (inputFileListName == NULL) || (inputPath == NULL) || (distributionType == NULL) || (outputFileName == NULL) ) {
-//    cerr << usage << endl;
-//    exit(1);
-//  }	
+  if( (inputFileListName.empty())  || (inputPath.empty()) || (distributionType.empty()) || (outputFileName.empty()) ) {
+    cerr << usage << endl;
+    exit(1);
+  }	
 
 
   // argv[1] input file containing the list of files
@@ -57,10 +57,10 @@ int main(int argc, char* argv[]) {
     exit(1);
   }
 
-  ifstream inputFileNames(inputFileListName);
-  ofstream outputFile(outputFileName);
-  string prefixPath(inputPath);
-  string metricName(distributionType);
+  ifstream inputFileNames(inputFileListName.c_str());
+  ofstream outputFile(outputFileName.c_str());
+  string prefixPath(inputPath.c_str());
+  string metricName(distributionType.c_str());
 
   if (inputFileNames.fail() == true) {
     cout << "Input File can not be opened"<<endl;
