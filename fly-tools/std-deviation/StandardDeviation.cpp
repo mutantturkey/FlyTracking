@@ -17,6 +17,7 @@ int main(int argc, char* argv[]) {
   string outputFileName;
   string distributionType;
   string inputFileList;
+  string currentFileName;
 
   while ((c = getopt (argc, argv, "i:o:l:t:h")) != -1)
     switch (c)
@@ -46,17 +47,6 @@ int main(int argc, char* argv[]) {
     exit(1);
   }	
 
-
-  // argv[1] input file containing the list of files
-  // argv[2] output file containing the standard deviation and file name pair
-  // argv[3] data file path
-  // argv[4] data file postfix of metricname
-
-  if (argc < 3) {
-    cout<<"Please provide the parameters ./executable iputfilename outputfilename"<<endl;
-    exit(1);
-  }
-
   ifstream inputFileNames(inputFileListName.c_str());
   ofstream outputFile(outputFileName.c_str());
   string prefixPath(inputPath.c_str());
@@ -69,12 +59,10 @@ int main(int argc, char* argv[]) {
 
   outputFile<<left<<setw(30)<<"File Name"<<left<<setw(20)<<"Standard deviation"<<left<<setw(20)<<"Mean"<<endl;
 
-
-  string currentFileName;
   while(inputFileNames>>currentFileName) {
 
     string currentFileWithExtension = prefixPath + currentFileName + "/" + currentFileName + "_"+ metricName +".txt";
-    cout<<"File"<<currentFileWithExtension<<endl;
+    cout<<"File: "<<currentFileWithExtension<<endl;
     ifstream currentFile(currentFileWithExtension.c_str());
     if (currentFile.fail() == true) {
       cout << currentFileName + " cannot be opened"<<endl;
@@ -100,7 +88,6 @@ int main(int argc, char* argv[]) {
     M = currentHistogramValues.size();
     // mean
     double mean = sumOfValues/N;
-
 
     // sigma^2 = (sum( (i-mean)^2*H_i ) )/(N-1) for i = 0 to M-1
     double standardDev = 0.0;
