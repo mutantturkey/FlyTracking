@@ -27,7 +27,7 @@ int findmax (uint8_t *p, int n) {
 
 int main(int argc, char **argv ) {
 
-  char *usage = "derive-background -i <input-list> -s <sample-file> -o <output-filename>";
+  char *usage = "derive-background -i <input-list> -o <output-filename>";
   char *output_file = NULL;
   char *image_list = NULL;
   int c;
@@ -90,8 +90,12 @@ int main(int argc, char **argv ) {
   } 
 
   int height =  MagickGetImageHeight(first_wand);
-  int width =  MagickGetImageWidth(first_wand);
+  int width =   MagickGetImageWidth(first_wand);
 
+  if (height == 0 | width == 0) {
+    puts("height/or width is 0!");
+    exit(1);
+  }
   first_wand =  DestroyMagickWand(first_wand);
 
   printf("height: %d width:%d \n", height, width);
@@ -135,7 +139,7 @@ int main(int argc, char **argv ) {
 
     printf("Image number:%d Filename: %s \n", image, filename);
     for (i=0; i<height; i++) {
-      pixels = PixelGetNextIteratorRow(input_iterator, &width);
+      pixels = PixelGetNextIteratorRow(input_iterator, &j);
       for (j=0; j<width ; j++) {
 
         green = PixelGetGreen(pixels[j]);
