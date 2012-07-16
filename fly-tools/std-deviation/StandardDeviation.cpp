@@ -1,16 +1,18 @@
-#include<iostream>
-#include <cstdlib> 
-#include<fstream>
-#include<iomanip>
-#include<cmath>
-#include<vector>
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <fstream>
+#include <iomanip>
+#include <cmath>
+#include <vector>
+
 using namespace std;
 
 vector<double> currentHistogramValues;
 
 int main(int argc, char* argv[]) {
 
-  int c;	
+  int c;
   string usage = "standard-deviation -l <list-of-files> -i <input-path> -o <output-file> -t <type>";
   string inputFileListName;
   string inputPath;
@@ -20,8 +22,7 @@ int main(int argc, char* argv[]) {
   string currentFileName;
 
   while ((c = getopt (argc, argv, "i:o:l:t:h")) != -1)
-    switch (c)
-    {
+    switch (c) {
       case 'l':
         inputFileListName = optarg;
         break;
@@ -42,7 +43,7 @@ int main(int argc, char* argv[]) {
         break;
     }
 
-  if( (inputFileListName.empty())  || (inputPath.empty()) || (distributionType.empty()) || (outputFileName.empty()) ) {
+  if ( inputFileListName.empty()  || inputPath.empty() || distributionType.empty() || outputFileName.empty() ) {
     cerr << usage << endl;
     exit(1);
   }	
@@ -57,9 +58,9 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  outputFile<<left<<setw(30)<<"File Name"<<left<<setw(20)<<"Standard deviation"<<left<<setw(20)<<"Mean"<<endl;
+  outputFile << left << setw(30) << "File Name" << left << setw(20) << "Standard deviation" << left << setw(20) << "Mean" << endl;
 
-  while(inputFileNames>>currentFileName) {
+  while( inputFileNames >> currentFileName ) {
 
     string currentFileWithExtension = prefixPath + currentFileName + "/" + currentFileName + "_"+ metricName +".txt";
     cout<<"File: "<<currentFileWithExtension<<endl;
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
       currentHistogramValues.push_back(currentValueOfHistogram);
 
       N = N + currentValueOfHistogram;
-      i=i+1.0;
+      i = i+1.0;
     }
 
     M = currentHistogramValues.size();
@@ -93,7 +94,7 @@ int main(int argc, char* argv[]) {
     double standardDev = 0.0;
     double sumSquaredResults = 0.0;
     int j = 0;
-    for (i=0.0; i<M; i=i+1.0) {
+    for ( i = 0.0; i < M; i = i+1.0 ) {
       sumSquaredResults += pow((i-mean), 2.0)*currentHistogramValues[j];
       j++;
     }
