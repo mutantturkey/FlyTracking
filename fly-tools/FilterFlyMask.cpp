@@ -79,17 +79,17 @@ void fillResidualWithObj(vector<pair<int, int> > & obj, ColorRGB c)
 void writeHist(const char* filename, map<unsigned int, unsigned int> & len)
 {
   map<unsigned int,unsigned int>::iterator front = len.begin(),
-  back = len.end();
+    back = len.end();
   back--;
 
 
   unsigned int first = front->first, last = back->first;
   /*if (cutoff != -1 && cutoff < int(last))
-  last = cutoff;
-  */
+    last = cutoff;
+    */
   cout << "Min: " << first << endl
-  << "Max: " << last << endl
-  << "Count: " << last-first << endl;
+    << "Max: " << last << endl
+    << "Count: " << last-first << endl;
   //vector<unsigned int> hist(last-first, 0);
   vector<unsigned int> hist(last+1, 0);
 
@@ -101,14 +101,14 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> & len)
     for (unsigned int j = first; j<=last; j++)
     {
       /*if ( roundT(j-first) >= int(hist.size()) )
-      hist.resize(j-first,0);
-      hist[roundT(j-first)] = len[j];
-      */
+        hist.resize(j-first,0);
+        hist[roundT(j-first)] = len[j];
+        */
 
       /*if ( roundT(j) >= int(hist.size()) )
-      hist.resize(j,0);
-      hist[roundT(j)] = len[j];
-      */
+        hist.resize(j,0);
+        hist[roundT(j)] = len[j];
+        */
       hist[j] = len[j];
     }
   }
@@ -116,8 +116,8 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> & len)
   { cerr << "Bad histogram bucketing" << endl; }
 
   /*if ( (cutoff >= 0) && (cutoff<int(hist.size())) )
-  hist.resize(cutoff);
-  */
+    hist.resize(cutoff);
+    */
   len.clear();
   try
   {
@@ -135,191 +135,166 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> & len)
 
 int main(int argc, char* argv[])
 {
-    string usage = "Usage: FilterFlyMask -f <image filename> -r <ratio> -m <mask image> -o <outputFolderName>";
-		string fileName;
-		string inputMaskFileLocation;
-		string outputFileLocation;
-		double ratioSecondLargestToLargest;
-		int c;
-    opterr = 0;
+  string usage = "Usage: FilterFlyMask -f <image filename> -r <ratio> -m <mask location> -o <outputFolderName>";
+  string fileName;
+  string inputMaskFileLocation;
+  string outputFileLocation;
+  double ratioSecondLargestToLargest;
+  int c;
+  opterr = 0;
 
-    while ((c = getopt (argc, argv, "m:f:r:o:hv")) != -1)
-        switch (c)
-        {
-        case 'f':
-            fileName = optarg;
-            break;
-        case 'm':
-            inputMaskFileLocation = optarg;
-            break;
-        case 'r':
-            ratioSecondLargestToLargest = atof(optarg);
-            break;
-        case 'o':
-            outputFileLocation = optarg;
-            break;
-        case 'v':
-            break;
-        case 'h':
-						cout << usage << endl;
-        		exit(1);
-						break;
-				defaut:
-						break;
-				}
-	
-	if( fileName.empty() || inputMaskFileLocation.empty() || ratioSecondLargestToLargest == NULL || outputFileLocation.empty()) {
-		cout << usage << endl;
-		exit(1);
-	}
-  //MagickCore::SetMagickResourceLimit(MagickCore::MemoryResource, 1536);
-  //MagickCore::SetMagickResourceLimit(MagickCore::MapResource, 2048);
+  while ((c = getopt (argc, argv, "m:f:r:o:hv")) != -1)
+    switch (c)
+    {
+      case 'f':
+        fileName = optarg;
+        break;
+      case 'm':
+        inputMaskFileLocation = optarg;
+        break;
+      case 'r':
+        ratioSecondLargestToLargest = atof(optarg);
+        break;
+      case 'o':
+        outputFileLocation = optarg;
+        break;
+      case 'v':
+        break;
+      case 'h':
+        cout << usage << endl;
+        exit(1);
+        break;
+      defaut:
+        break;
+    }
+
+  if( fileName.empty() || inputMaskFileLocation.empty() || ratioSecondLargestToLargest == 0 || outputFileLocation.empty()) {
+    cout << usage << endl;
+    exit(1);
+  }
 
   ratioSecondLargestToLargest = 1/ratioSecondLargestToLargest;
 
   char buffer[100];
 
   string savedFileName = fileName;
-  string finalImageName = outputFileLocation + "final/"+ savedFileName;
+  string finalImageName = outputFileLocation + "final/" + savedFileName;
 
-    // get the input mask file
-    fileName =  inputMaskFileLocation + fileName;
+  // get the input mask file
+  fileName =  inputMaskFileLocation + fileName;
 
-    Image* original = new Image(fileName.c_str());
-    int width = original->columns();
-    int height = original->rows();
-    sprintf(buffer,"%ix%i",width,height);
+  Image* original = new Image(fileName.c_str());
+  int width = original->columns();
+  int height = original->rows();
+  sprintf(buffer,"%ix%i",width,height);
 
-    imgForFilter = new Image(buffer, "white");
-    shape.clear();
+  imgForFilter = new Image(buffer, "white");
+  shape.clear();
 
-    // find the black background from location (0,0)
-    ColorMono topLeftColor = ColorMono(original->pixelColor(0,0));
-    ColorMono topRightColor = ColorMono(original->pixelColor(width-1,0));
-    ColorMono bottomRightColor = ColorMono(original->pixelColor(width-1,height-1));
-    ColorMono bottomLeftColor = ColorMono(original->pixelColor(0,height-1));
+  // find the black background from location (0,0)
+  ColorMono topLeftColor = ColorMono(original->pixelColor(0,0));
+  ColorMono topRightColor = ColorMono(original->pixelColor(width-1,0));
+  ColorMono bottomRightColor = ColorMono(original->pixelColor(width-1,height-1));
+  ColorMono bottomLeftColor = ColorMono(original->pixelColor(0,height-1));
 
-    if (topLeftColor.mono() == false) {
+  if (topLeftColor.mono() == false) {
 
-      findObjIterative(original, 0, 0, shape, false, 0.0);
+    findObjIterative(original, 0, 0, shape, false, 0.0);
 
-    } else if (topRightColor.mono() == false) {
+  } else if (topRightColor.mono() == false) {
 
-      cout << "Top left is not black pixel for FLOOD FILLING so flood filling from top right\n";
-      findObjIterative(original, width-1, 0, shape, false, 0.0);
+    cout << "Top left is not black pixel for FLOOD FILLING so flood filling from top right\n";
+    findObjIterative(original, width-1, 0, shape, false, 0.0);
 
-    } else if (bottomRightColor.mono() == false) {
+  } else if (bottomRightColor.mono() == false) {
 
-      cout << "Top left/Top right are not black pixel for FLOOD FILLING so flood filling from bottom right\n";
-      findObjIterative(original, width-1, height-1, shape, false, 0.0);
+    cout << "Top left/Top right are not black pixel for FLOOD FILLING so flood filling from bottom right\n";
+    findObjIterative(original, width-1, height-1, shape, false, 0.0);
 
-    } else {
+  } else {
 
-      cout << "Top left/top right/bottom right are not black pixel for FLOOD FILLING so flood filling from the bottomleft\n";
-      findObjIterative(original, 0, height-1, shape, false, 0.0);
+    cout << "Top left/top right/bottom right are not black pixel for FLOOD FILLING so flood filling from the bottomleft\n";
+    findObjIterative(original, 0, height-1, shape, false, 0.0);
 
-    }
+  }
 
-    string inputFileName =  outputFileLocation + "temp/" + savedFileName;
+  string inputFileName =  outputFileLocation + "temp/" + savedFileName;
 
-    Image* final_image = imgForFilter;
-
-
-    sprintf(buffer,"%ix%i",width,height);
-
-    // residual image is initialized with black representing not visited.
-    residual = new Image(buffer, "black");
+  Image* final_image = imgForFilter;
 
 
-    shapeVectors.clear();
-    sizeNIndexVector.clear();
+  sprintf(buffer,"%ix%i",width,height);
 
-    // find the objects and sort according to size
-    int objectCounter = 0;
-    for (int x=0; x<width; x++) {
-      for (int y=0; y<height; y++) {
-        // find the white object using eight connected
-        shape.clear();
-        findObj(final_image, x, y, shape, true, true);
-        int s = shape.size();
+  // residual image is initialized with black representing not visited.
+  residual = new Image(buffer, "black");
 
-        if (s > 0) {
-          shapeVectors.push_back(shape);
-          pair<int, int> si(s, objectCounter);
-          sizeNIndexVector.push_back(si);
-          objectCounter++;
-        }
+
+  shapeVectors.clear();
+  sizeNIndexVector.clear();
+
+  // find the objects and sort according to size
+  int objectCounter = 0;
+  for (int x=0; x<width; x++) {
+    for (int y=0; y<height; y++) {
+      // find the white object using eight connected
+      shape.clear();
+      findObj(final_image, x, y, shape, true, true);
+      int s = shape.size();
+
+      if (s > 0) {
+        shapeVectors.push_back(shape);
+        pair<int, int> si(s, objectCounter);
+        sizeNIndexVector.push_back(si);
+        objectCounter++;
       }
     }
+  }
 
-    bubbleSort();
+  bubbleSort();
 
-    // take the largest object
-    double currentLargestSize = static_cast<double>(sizeNIndexVector[0].first);
-    double secondLargest = 0;
-    double ratio = 0;
+  // take the largest object
+  double currentLargestSize = static_cast<double>(sizeNIndexVector[0].first);
+  double secondLargest = 0;
+  double ratio = 0;
 
-    if (sizeNIndexVector.size() > 1) {
+  if (sizeNIndexVector.size() > 1) {
 
-      secondLargest = static_cast<double>(sizeNIndexVector[1].first);
-      ratio = secondLargest/currentLargestSize;
+    secondLargest = static_cast<double>(sizeNIndexVector[1].first);
+    ratio = secondLargest/currentLargestSize;
 
+  }
+
+  // find the largest to second largest ratio if it is less than the defined ratio then
+  // the objects are single object
+
+  int numberOfObjects = 0;
+
+  if (sizeNIndexVector.size() == 1) {
+    numberOfObjects = 1;
+  }
+  else if (ratio <= ratioSecondLargestToLargest ) {
+    numberOfObjects = 1;
+  } else {
+    numberOfObjects = 2;
+  }
+
+  Image* imgFinal = new Image(buffer, "black");
+
+  for (int n=0; n<numberOfObjects; n++) {
+
+    int totalPoints = sizeNIndexVector[n].first;
+
+    for (int i=0; i<totalPoints; i++) {
+
+      imgFinal->pixelColor(shapeVectors[ sizeNIndexVector[n].second ][i].first, shapeVectors[ sizeNIndexVector[n].second ][i].second, "white");
     }
 
-    // find the largest to second largest ratio if it is less than the defined ratio then
-    // the objects are single object
+  }
 
-    int numberOfObjects = 0;
+  // write final image
+  cout << finalImageName << " \n";
+  imgFinal->write( finalImageName.c_str() );
 
-    if (sizeNIndexVector.size() == 1) {
-      numberOfObjects = 1;
-    }
-    else if (ratio <= ratioSecondLargestToLargest ) {
-      numberOfObjects = 1;
-    } else {
-      numberOfObjects = 2;
-    }
-
-    Image* imgFinal = new Image(buffer, "black");
-
-    for (int n=0; n<numberOfObjects; n++) {
-
-      int totalPoints = sizeNIndexVector[n].first;
-
-      for (int i=0; i<totalPoints; i++) {
-
-        imgFinal->pixelColor(shapeVectors[ sizeNIndexVector[n].second ][i].first, shapeVectors[ sizeNIndexVector[n].second ][i].second, "white");
-      }
-
-    }
-
-    // write final image
-    cout << finalImageName << " \r";
-    imgFinal->write( finalImageName.c_str() );
-
-{
-//     // writing the single in red
-//     if (numberOfObjects == 1) {
-// 
-//       Image* singleObjectFinal = new Image(buffer, "black");
-// 
-//       int totalPoints = sizeNIndexVector[0].first;
-// 
-//       cout << "Output the single object of size = "<<totalPoints<<endl;
-// 
-//       for (int i=0; i<totalPoints; i++) {
-// 
-//         singleObjectFinal->pixelColor(shapeVectors[ sizeNIndexVector[0].second ][i].first, shapeVectors[ sizeNIndexVector[0].second ][i].second, "red");
-//       }
-// 
-//       //string singleImageName = "output/filtered/single/"+fileName;
-//       string singleImageName = outputFileLocation + "single/"+ savedFileName;
-// 
-//       singleObjectFinal->write(singleImageName.c_str());
-// 
-//     }
-// 
-}
 
   return 0;
 }
@@ -335,23 +310,23 @@ void findObjIterative(Image* img, int x, int y, vector<pair<int, int> > & shape,
 void fourConnObjIterative(Image* img, int x, int y, vector<pair<int, int> > & obj, double colorLookingFor) {
 
   /*
-  Flood-fill (node, target-color, replacement-color):
-  1. Set Q to the empty queue.
-  2. If the color of node is not equal to target-color, return.
-  3. Add node to Q.
-  4. For each element n of Q:
-  5.  If the color of n is equal to target-color:
-  6.   Set w and e equal to n.
-  7.   Move w to the west until the color of the node to the west of w no longer matches target-color.
-  8.   Move e to the east until the color of the node to the east of e no longer matches target-color.
-  9.   Set the color of nodes between w and e to replacement-color.
-  10.   For each node n between w and e:
-  11.    If the color of the node to the north of n is target-color, add that node to Q.
-  If the color of the node to the south of n is target-color, add that node to Q.
-  12. Continue looping until Q is exhausted.
-  13. Return.
+     Flood-fill (node, target-color, replacement-color):
+     1. Set Q to the empty queue.
+     2. If the color of node is not equal to target-color, return.
+     3. Add node to Q.
+     4. For each element n of Q:
+     5.  If the color of n is equal to target-color:
+     6.   Set w and e equal to n.
+     7.   Move w to the west until the color of the node to the west of w no longer matches target-color.
+     8.   Move e to the east until the color of the node to the east of e no longer matches target-color.
+     9.   Set the color of nodes between w and e to replacement-color.
+     10.   For each node n between w and e:
+     11.    If the color of the node to the north of n is target-color, add that node to Q.
+     If the color of the node to the south of n is target-color, add that node to Q.
+     12. Continue looping until Q is exhausted.
+     13. Return.
 
-  */
+*/
 
 
   queue< MyPair > Q;
@@ -521,10 +496,10 @@ void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool c
     p.second = y;
     obj.push_back(p);
 
-//		if (obj.size() > barrier) {
-//			cout<<obj.size()<<endl;
-//			barrier = barrier + 1000;
-//		}
+    //		if (obj.size() > barrier) {
+    //			cout<<obj.size()<<endl;
+    //			barrier = barrier + 1000;
+    //		}
     // setting the residual image at pixel(x,y) to white.
     residual->pixelColor(x,y, ColorMono(true));
 
@@ -566,10 +541,10 @@ void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool 
     p.second = y;
     obj.push_back(p);
 
-//		if (obj.size() > barrier) {
-//			//cout<<obj.size()<<endl;
-//			barrier = barrier + 1000;
-//		}
+    //		if (obj.size() > barrier) {
+    //			//cout<<obj.size()<<endl;
+    //			barrier = barrier + 1000;
+    //		}
     // setting the residual image at pixel(x,y) to white.
     residual->pixelColor(x,y, ColorMono(true));
 
@@ -661,12 +636,12 @@ vector<double> covariantDecomposition(vector<pair<int,int> > & points)
   retval.push_back(static_cast<double>(centroid.first));
   retval.push_back(static_cast<double> (centroid.second));
 
-//	for (i=0; i<2; i++) {
-//		gsl_vector_view evec_i = gsl_matrix_column (eigenVec, i);
-//		//printf ("eigenvalue = %g\n", eval_i);
-//		cout<<"eigenvector = \n";
-//		gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
-//	}
+  //	for (i=0; i<2; i++) {
+  //		gsl_vector_view evec_i = gsl_matrix_column (eigenVec, i);
+  //		//printf ("eigenvalue = %g\n", eval_i);
+  //		cout<<"eigenvector = \n";
+  //		gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
+  //	}
 
   gsl_vector_free(eigenVal);
   gsl_matrix_free(matrice);
