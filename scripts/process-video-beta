@@ -5,18 +5,19 @@ cat << EOF
 usage: $0 options
 
 OPTIONS:
-	-h	Show this message
-	-v	Video location
-	-l	Crop list 
-	-t	Type of video being processed 
-	-n	Set number to start
-	-d	output directory
-	-V	verbose mode
-	-1  Execute Stage 1: Extraction and Cropping
-	-2	Execute Stage 2: Deriving Backgrounds
-	-3  Execute Stage 3: Mask Generation and Filtration
-	-4 	Execute Stage 4: Generating Feature Vector
-	-S	Server list - following the GNU Parallel convention [ncpu/]sshlogin[,[ncpu/]sshlogin[,...]]
+    -h	Show this message
+    -v	Video location
+    -l	Crop list 
+    -t	Type of video being processed 
+    -n	Set number to start
+    -d	output directory
+    -V	verbose mode
+    -1  Execute Stage 1: Extraction and Cropping
+    -2	Execute Stage 2: Deriving Backgrounds
+    -3  Execute Stage 3: Mask Generation
+    -4  Execute Stage 4: Filteration
+    -5 	Execute Stage 5: Generating Feature Vector
+    -S	Server list - following the GNU Parallel convention [ncpu/]sshlogin[,[ncpu/]sshlogin[,...]]
 
 Copyright 2012 Calvin Morrison
 EOF
@@ -39,10 +40,11 @@ stage_1=
 stage_2=
 stage_3=
 stage_4=
+stage_5=
 
 server_list=
 
-while getopts "ht:n:l:d:v:S:V1234" OPTION
+while getopts "ht:n:l:d:v:S:V12354" OPTION
 do
 	case $OPTION in
 		h)
@@ -64,6 +66,9 @@ do
 		v)
 			video_file=$OPTARG
       ;;
+		5) 
+			stage_5=5
+			;;
 		1) 
 			stage_1=1
 			;;
@@ -99,13 +104,14 @@ fi
 
 
 # if there are no stages set, execute them all
-if [[ -z $stage_1 ]] && [[ -z $stage_2 ]] && [[ -z $stage_3 ]] && [[ -z $stage_4 ]] 
+if [[ -z $stage_1 ]] && [[ -z $stage_2 ]] && [[ -z $stage_3 ]] && [[ -z $stage_4 ]] && [[ -z $stage_5 ]]
 then
 	log "no stages set - running all stages"
 	stage_1=1
 	stage_2=1
 	stage_3=1
 	stage_4=1
+  stage_5=1
 fi
 
 
@@ -178,7 +184,8 @@ fi
 if [[ $stage_2 -eq 1	]]; then	
   
 	echo "Stage 2: Deriving Backgrounds"
-  parallel --xapply -v -j +0 -S $server_list -q "derivebackground.py <(find $output_dir"/Cropped/"{}"/"*) $output_dir/Masks/{}/Background.png" ::: $set_list
+  parallel -S $server_list find $output_dir/Cropped/{}/*.png \| head -n 3000 \> input_{}.txt ::: $set_list
+  parallel --xapply -v -j +0 -S $server_list derive-background -i input_{}.txt -o $output_dir/Masks/{}/Background.png ::: $set_list
 
 fi
 
@@ -192,24 +199,31 @@ while read crop; do
 	
 	echo "Stage 3: Generating Masks" 
 	cd $output_dir/Cropped/$setname 
-	
-	log $server_list
-	#parallel -i convert -composite -compose Difference {} $output_dir/Masks/$setname/Background.png -contrast-stretch 90%x%0% -threshold 30% $output_dir/Masks/$setname/Masks/{} -- *.png
-  find `pwd`/*.png | parallel -v -j +0 -S $server_list convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
-	
-  # Filtering Stage	
-	cd $output_dir
 
-	#parallel -i FlyTrackingIterativeFilter {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/ -- $( ls $output_dir/Masks/$setname/Masks/ )
-  ls $output_dir/Masks/$setname/Masks/ | parallel -v -j +0 -S $server_list /site/kuiper/jcm357/FilterFlyMask {} 15 $output_dir/Masks/$setname/Masks/ $output_dir/Filtered/$setname/
-	i=$(( $i + 1 ))	
+  mask-generator -i <(find $output_dir/Cropped/$setname/*.png) -b $output_dir/Masks/$setname/Background.png -o $output_dir/Masks/$setname/Masks/	
+  #find `pwd`/*.png | parallel -v -j +0 -S $server_list convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
+
 done < $crop_file
 
 fi
 
-
 if [[ $stage_4 -eq 1 ]]; then
+i=$set_number
 
+while read crop; do
+	
+	setname=$set_type$i
+
+  #Usage: FilterFlyMask -f <image filename> -r <ratio> -m <mask location> -o <outputFolderName>
+
+  ls $output_dir/Masks/$setname/Masks/ | parallel -v -j +0 -S $server_list FilterFlyMask -f {} -r 15 -m $output_dir/Masks/$setname/Masks/ -o $output_dir/Filtered/$setname/
+	i=$(( $i + 1 ))	
+
+done < $crop_file
+
+fi
+
+if [[ $stage_5 -eq 1 ]]; then
 i=$set_number
 
 while read crop; do
@@ -218,7 +232,7 @@ while read crop; do
 	
 	echo "Stage 4: Generating the Feature Vector" 
   # executablename <inputFile.txt> <originalImagePath> <finalOutputPath> <maskImagePath> <outputFilePrefix>
-  FlyTracking <(ls $output_dir/Filtered/$setname/final/) $output_dir/Cropped/$setname/ $output_dir/Final/$setname/ $output_dir/Filtered/$setname/final/ $setname &
+  FlyTracking <(ls $output_dir/Filtered/$setname/final/) $output_dir/Filtered/$setname/final/ $output_dir/Final/$setname/ $output_dir/Filtered/$setname/final/ $setname &
   
 	i=$(($i + 1)) 	
 done < $crop_file
