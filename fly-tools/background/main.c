@@ -155,8 +155,7 @@ int main(int argc, char **argv ) {
     }
     PixelSyncIterator(input_iterator);
     input_iterator=DestroyPixelIterator(input_iterator);
-    ClearMagickWand(input_wand);
-
+    input_wand = DestroyMagickWand(input_wand);
     image++;
   }
 
