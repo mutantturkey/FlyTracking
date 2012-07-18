@@ -12,7 +12,7 @@ derive-background:
 mask-generator:
 	$(CC) mask/main.c mask/thpool.c -I./mask/ -o mask-generator $(CFLAGS) $(MAGICKCFLAGS) -pthread
 standard-deviation:
-	$(CPPC) standard-deviation/StandardDeviation.cpp -o standard-deviation $(CPPFLAGS)
+	$(CPPC) std-deviation/StandardDeviation.cpp -o standard-deviation $(CPPFLAGS)
 FlyTrackingMain:
 	$(CPPC) FlyTrackingMain.cpp FlyObject.cpp FrameInfo.cpp -o FlyTracking $(CPPFLAGS) $(MAGICKCPPFLAGS)
 FilterFlyMask:
