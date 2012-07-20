@@ -98,6 +98,8 @@ map<unsigned int, unsigned int> centroidDistanceMap;
 map<unsigned int, unsigned int> headDirAngleMap;
 map<unsigned int, unsigned int> speedMap;
 
+int barrier = 1000;
+
 void initSequence(){
   startOfATrackSequence = -1;
   endOfATrackSequence = -1;
@@ -159,15 +161,6 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
     }
     for (unsigned int j = first; j<=last; j++)
     {
-      /*if ( roundT(j-first) >= int(hist.size()) )
-        hist.resize(j-first,0);
-        hist[roundT(j-first)] = len[j];
-        */
-
-      /*if ( roundT(j) >= int(hist.size()) )
-        hist.resize(j,0);
-        hist[roundT(j)] = len[j];
-        */
       hist[j] = dataMap[j];
     }
   }
@@ -186,8 +179,6 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
   catch (...)
   { cerr << "Bad memory loc for opening file" << endl; }
 }
-
-
 
 void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon=true, bool colorLookingFor=true);
 void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color=true);
@@ -691,9 +682,7 @@ void putPixel(Image* maskImage, int x, int y, int color) {
     pair<int,int> temp(x,y);
     bresenhamLine.push_back(temp);
   }
-
 }
-
 
 int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
@@ -744,14 +733,12 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
   switch (octant) {
     case 1:
-      //----------------------------
       d = 2*dy - dx;
       delE = 2*dy;
       delNE = 2*(dy-dx);
 
       x = x0;
       y = y0;
-
 
       putPixel(maskImage,x, y, 1);
       if (isInFemaleBlob == true)
@@ -760,15 +747,11 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       while (x < x1) {
         // if we choose E because midpoint is above the line
         if (d <= 0) {
-
           d = d + delE;
-
           x = x+1;
-
-        } else {
-
+        }
+        else {
           d = d + delNE;
-
           x = x + 1;
           y = y + 1;
         }
@@ -785,10 +768,8 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       d = 2*dx - dy;
       delN = 2*dx;
       delNE = 2*(dx-dy);
-
       x = x0;
       y = y0;
-
 
       putPixel(maskImage,x, y, 2);
       if (isInFemaleBlob == true)
@@ -797,24 +778,19 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       while (y < y1) {
         // if we choose N because midpoint is above the line
         if (d<=0) {
-
           d = d + delN;
-
           y = y + 1;
-
-        } else {
-
+        } 
+        else {
           d = d + delNE;
-
-
           x = x + 1;
           y = y + 1;
 
         }
+
         putPixel(maskImage,x, y, 2);
         if (isInFemaleBlob == true)
           return 1;
-
       }
       break;
 
@@ -823,7 +799,6 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       d = dy - 2*dx;
       delN = 2*dx;
       delNW = 2*(dx-dy);
-
       x = x0;
       y = y0;
 
@@ -835,27 +810,19 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       while (y < y1) {
 
         if (d <= 0) {
-
           d = d + delN;
-
           y = y + 1;
-
-        } else {
-
+        } 
+        else {
           d = d + delNW;
-
           y = y + 1;
-
           x = x - 1;
-
         }
+
         putPixel(maskImage,x, y, 3);
         if (isInFemaleBlob == true)
           return 1;
-
-
       }
-
       break;
 
     case 4:
@@ -875,77 +842,29 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       while ( x > x1 ) {
 
         if (d <= 0) {
-
           d = d + delW;
-
           x = x - 1;
-
-
-        } else {
+        }
+        else {
           d = d + delNW;
-
-
           x = x - 1;
           y = y + 1;
-
         }
 
         putPixel(maskImage,x, y, 4);
         if (isInFemaleBlob == true)
           return 1;
-
       }
 
       break;
-
-      /*case 4:
-
-        d = dx - 2*dy;
-        cout << "dx - 2*dy = "<<(dx-2*dy)<<endl;
-        delW = -2*dy;
-        cout << "-2*dy = "<<(-2*dy)<<endl;
-        delNW = 2*(dx - dy);
-        cout << "2*(dx - dy) = "<<(2*(dx - dy))<<endl;
-
-        x = x0;
-        y = y0;
-
-        putpixel(x, y, 4);
-
-        while ( x >= x1 ) {
-
-        if (d <= 0) {
-
-        d = d + delW;
-        x = x - 1;
-        cout << "At pixel(" <<x<<","<<y<<") Going W since d <= 0 "<<d<<endl;
-
-
-        } else {
-        d = d + delNW;
-
-        cout << "At pixel(" <<x<<","<<y<<") Going NW since d > 0 "<<d<<endl;
-
-        x = x - 1;
-        y = y + 1;
-        }
-
-        putpixel(x, y, 4);
-        }
-
-        break;
-        */
 
     case 5:
 
       d = -dx + 2*dy;
       delW = 2*dy;
       delSW = 2*(-dx+dy);
-
       x = x0;
       y = y0;
-
-
 
       putPixel(maskImage,x, y, 5);
       if (isInFemaleBlob == true)
@@ -955,33 +874,21 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       while (x > x1) {
 
         if (d<=0) {
-
           d = d + delW;
-
-
           x = x - 1;
-
-        } else {
-
+        }
+        else {
           d = d + delSW;
-
-
           x = x - 1;
-
           y = y - 1;
-
-
         }
 
         putPixel(maskImage,x, y, 5);
         if (isInFemaleBlob == true)
           return 1;
-
-
       }
 
       break;
-
 
     case 6:
 
@@ -992,7 +899,6 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-
       putPixel(maskImage,x,y,6);
       if (isInFemaleBlob == true)
         return 1;
@@ -1002,13 +908,10 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
         if (d<=0) {
 
           d = d + delS;
-
           y = y -1;
         }
         else {
-
           d = d + delSW;
-
           y = y -1;
           x = x -1;
         }
@@ -1042,8 +945,6 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
         }
         else {
           d = d + delSE;
-
-
           y = y - 1;
           x = x + 1;
         }
@@ -1074,21 +975,18 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
         if (d<=0) {
           d = d + delE;
-
           x = x + 1;
         }
         else {
           d = d + delSE;
-
-
           y = y - 1;
           x = x + 1;
         }
+
         cout << "putpixel "<<x<<","<<y<<endl;
         putPixel(maskImage,x, y, 8);
         if (isInFemaleBlob == true)
           return 1;
-
       }
 
       break;
@@ -1097,12 +995,9 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       cout << "No octant which should be a bug\n";
       exit(0);
       break;
-
-
   }
 
   return 0;
-
 }
 
 
@@ -1126,7 +1021,6 @@ int sequenceCondition(FrameInfo prevFI,FrameInfo currentFI) {
     return -1;
 
 }
-
 
 void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob, bool unprocessed) {
 
@@ -1516,9 +1410,7 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
       startIndex = 0;
       endIndex = 0;
     }
-
   }
-
 }
 
 
@@ -1889,7 +1781,6 @@ void objectCorrespondence(FrameInfo &prevFI, FrameInfo &currentFI) {
     }
   }
 
-
 }
 
 double euclideanDist(FlyObject a, FlyObject b) {
@@ -1926,8 +1817,6 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
       cout << "New max distance" << maxDist << " at the frame number "<<i;
       cout << endl;
     }
-
-
 
   }
 
@@ -2105,17 +1994,13 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-
-
   // open the file for statistics
   string lPSFileName("LongestPositive.txt");
   lPSFileName = finalOutputPath + outputFilePrefix + "_" + lPSFileName;
   cout << "LongestPositive.txt file name is "<<lPSFileName<<endl;
   foutLPS.open(lPSFileName.c_str());
 
-
   unsigned int objCount = 0;
-  int i;
 
   int frameCounter = 0;
   int fileCounter=0;
@@ -2129,11 +2014,7 @@ int main(int argc, char **argv)
   // to find the new head direction
   bool currentlyCalculatingHead = true;
 
-
-
   while (inputFile>>fileName) {
-
-    //	Image* img = new Image(argv[1]);// = new Image(argv[1]);
 
     int fi = fileName.find("_");
     // current sequence numbers spans from 0 - 18019, so 5 digits are needed
@@ -2147,7 +2028,6 @@ int main(int argc, char **argv)
     // save the name in the vector
     fnVector.push_back(fileName);
 
-    //fileName = "output/filtered/final/"+fileName;
     fileName = maskImagePath + fileName;
     cout << "Reading file "<<fileName<<endl;
     Image* img = new Image(fileName.c_str());
@@ -2182,7 +2062,7 @@ int main(int argc, char **argv)
           vector<double> eigenVal = covariantDecomposition(shape);
 
           {					
-            //						objCount++;
+            //objCount++;
 
             double velocity_x=0.0, velocity_y=0.0;
             // save the object information
@@ -2431,7 +2311,9 @@ int hitTheFly(Image* maskImage, int &intersectX, int &intersectY) {
       return 2;
     }
     else {
-      cout << "Going through "<<x<<" "<<y<<endl;
+      char temp[128];
+      sprintf(temp, "Going through (%d,%d) \n ", x, y);
+      vlog(temp);
     }
 
 
@@ -2941,7 +2823,8 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
   }
 
   if(writeFinalImages) {
-  img->write(outputFileName.c_str());
+    img->write(outputFileName.c_str());
+    delete img;
   }
   // overwrite the file now with axis
   //img->write(inputFileName.c_str());
@@ -2949,6 +2832,7 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
   // when do not want to identify on the original comment below line and uncomment the above one
 
   delete maskImage;
+
   if (isHitting == 1 || isHittingFemaleToMale == 0)
     calculateStatistics(currentFI, fileName, isFirst, singleBlob, true, false, unprocessed);
   else if (isHitting == 0 || isHittingFemaleToMale == 1)
@@ -2971,7 +2855,7 @@ void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eigh
   }
 }
 
-int barrier = 1000;
+
 void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color)
 {
   int width = img->columns(),height = img->rows();
