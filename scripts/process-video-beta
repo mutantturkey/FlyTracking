@@ -176,7 +176,7 @@ if [[ $stage_1  -eq 1 ]]; then
 	echo "$crop_list"
 	echo "$set_list"
 
-	parallel -v --progress --xapply -S $server_list mplayer -quiet -vo png:prefix={1}"_":outdir=$output_dir/Cropped/{1} -nosound -vf crop={2} -speed 12 $video_file ::: $set_list ::: $crop_list
+	parallel -v --progress --xapply -S $server_list mplayer -quiet -vo png:outdir=$output_dir/Cropped/{1} -nosound -vf crop={2} -speed 12 $video_file ::: $set_list ::: $crop_list
 
 fi
 
@@ -202,7 +202,7 @@ while read crop; do
 
   mask-generator -i <(find $output_dir/Cropped/$setname/*.png) -b $output_dir/Masks/$setname/Background.png -o $output_dir/Masks/$setname/Masks/	
   #find `pwd`/*.png | parallel -v -j +0 -S $server_list convert \\\( -composite -compose Difference $output_dir/Masks/$setname/Background.png {} \\\) \\\( -contrast-stretch 90%x0% \\\) \\\( -threshold 30% \\\) $output_dir/Masks/$setname/Masks/{/}
-
+  i=$(($i + 1 )) 
 done < $crop_file
 
 fi
