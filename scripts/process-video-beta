@@ -67,7 +67,7 @@ do
 			video_file=$OPTARG
       ;;
 		5) 
-			stage_5=5
+			stage_5=1
 			;;
 		1) 
 			stage_1=1
@@ -231,8 +231,10 @@ while read crop; do
 	setname="$set_type$i"
 	
 	echo "Stage 4: Generating the Feature Vector" 
-  # executablename <inputFile.txt> <originalImagePath> <finalOutputPath> <maskImagePath> <outputFilePrefix>
-  FlyTracking <(ls $output_dir/Filtered/$setname/final/) $output_dir/Filtered/$setname/final/ $output_dir/Final/$setname/ $output_dir/Filtered/$setname/final/ $setname &
+
+  #Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -p <outputFilePrefix>
+  
+  FlyTracking -i <(ls $output_dir/Filtered/$setname/final/) -o $output_dir/Filtered/$setname/final/ -f $output_dir/Final/$setname/ -m $output_dir/Filtered/$setname/final/ -p $setname -x -v &
   
 	i=$(($i + 1)) 	
 done < $crop_file
