@@ -94,6 +94,7 @@ int totalFemaleLookingAtMale = 0;
 int totalSingleBlob = 0;
 int totalUnprocessedFrame = 0;
 int totalSeparated = 0;
+
 map<unsigned int, unsigned int> centroidDistanceMap;
 map<unsigned int, unsigned int> headDirAngleMap;
 map<unsigned int, unsigned int> speedMap;
@@ -484,22 +485,6 @@ inWhite = false;
 }
 }
 
-void drawLine(int x0, int y0, int x1, int y1, jzImage& img)
-{
-inWhite = false;
-startedWhite = false;
-
-// always go from x0 -> x1
-if (x0 > x1)
-{
-int temp = x0;
-x0 = x1;
-x1 = temp;
-temp = y0;
-y0 = y1;
-y1 = temp;
-}
-
 int dx, dy, d, x, y, incrE, incrNE;
 dx = x1 - x0;
 dy = y1 - y0;
@@ -678,9 +663,11 @@ void putPixel(Image* maskImage, int x, int y, int color) {
     cout << "Hit the male object at "<<x<<","<<y<<endl;
 
   } else {
-    cout << "Going through "<<x<<","<<y<<endl;
-    pair<int,int> temp(x,y);
-    bresenhamLine.push_back(temp);
+    char *temp;
+    sprintf(temp, "Going through (%d,%d) \n ", x, y);
+    vlog(temp);
+    pair<int,int> t(x,y);
+    bresenhamLine.push_back(t);
   }
 }
 
@@ -1952,12 +1939,12 @@ int main(int argc, char **argv)
   vlog("verbose logging out");
 
   if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
-    cerr << usage << endl;
-    cerr << inputFileName << endl;
-    cerr << origImagePath << endl;
-    cerr << finalOutputPath << endl;
-    cerr << maskImagePath << endl;
-    cerr << outputFilePrefix << endl;
+    cerr <<  usage << endl;
+    cerr << "input name: " << inputFileName << endl;
+    cerr << "original path: " << origImagePath << endl;
+    cerr << "output path: " << finalOutputPath << endl;
+    cerr << "mask path: " << maskImagePath << endl;
+    cerr << "output prefix: " << outputFilePrefix << endl;
     exit(1);
   }	
   string fileName;	
@@ -1984,7 +1971,6 @@ int main(int argc, char **argv)
     cout << "cannot open the statDebug file"<<endl;
     exit(1);
   }
-
 
   // debug file speed distribution
   string foutDebugSpeedFN = finalOutputPath + outputFilePrefix + "_speedDebug.txt";
@@ -2311,7 +2297,7 @@ int hitTheFly(Image* maskImage, int &intersectX, int &intersectY) {
       return 2;
     }
     else {
-      char temp[128];
+      char *temp;
       sprintf(temp, "Going through (%d,%d) \n ", x, y);
       vlog(temp);
     }
@@ -2403,11 +2389,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
             cout<<"foundshape size "<<foundShape.size()<<endl;
           }
         }
-
-
-
       }
-
     }
   }
 
@@ -2450,7 +2432,6 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
     pair<int,int > point = foundShape[i];
     maskImage->pixelColor(point.first, point.second,"white");
   }
-
 
   int hits = draw_line_bm(maskImage, x1, y1, x0, y0);
 
@@ -2826,8 +2807,6 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     img->write(outputFileName.c_str());
     delete img;
   }
-  // overwrite the file now with axis
-  //img->write(inputFileName.c_str());
 
   // when do not want to identify on the original comment below line and uncomment the above one
 
@@ -2843,6 +2822,7 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     calculateStatistics(currentFI, fileName, isFirst, singleBlob, false, false, unprocessed);
 
 }
+
 
 void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon, bool colorLookingFor)
 {
@@ -2948,12 +2928,10 @@ void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool 
     eightConnObj(img, x+1, y+1, obj, color);		
 
   }
-
 }
 
 // Aspect Ratio
-pair<int,int> getCentroid(vector<pair<int,int> > & points)
-{
+pair<int,int> getCentroid(vector<pair<int,int> > & points) {
   pair<int,int> centroid;
   centroid.first = 0;
   centroid.second = 0;
@@ -2971,8 +2949,7 @@ pair<int,int> getCentroid(vector<pair<int,int> > & points)
 }
 
 
-vector<double> covariantDecomposition(vector<pair<int,int> > & points)
-{
+vector<double> covariantDecomposition(vector<pair<int,int> > & points) {
   unsigned int i,j,k;
   pair<int,int> centroid = getCentroid(points);
   vector<double> retval;
@@ -3038,8 +3015,7 @@ vector<double> covariantDecomposition(vector<pair<int,int> > & points)
 }
 
 // isInterface for binary image
-bool isInterface(Image* orig, unsigned int x, unsigned int y)
-{
+bool isInterface(Image* orig, unsigned int x, unsigned int y) {
   // Get the current pixel's color
   ColorMono currentpixel = (ColorMono)orig->pixelColor(x,y);
   // If the current pixel is black pixel then it is not boundary pixel
