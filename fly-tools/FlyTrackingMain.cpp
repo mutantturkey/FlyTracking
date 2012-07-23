@@ -663,7 +663,7 @@ void putPixel(Image* maskImage, int x, int y, int color) {
     cout << "Hit the male object at "<<x<<","<<y<<endl;
 
   } else {
-    char *temp;
+    char temp[128];
     sprintf(temp, "Going through (%d,%d) \n ", x, y);
     vlog(temp);
     pair<int,int> t(x,y);
@@ -2297,7 +2297,7 @@ int hitTheFly(Image* maskImage, int &intersectX, int &intersectY) {
       return 2;
     }
     else {
-      char *temp;
+      char temp[128];
       sprintf(temp, "Going through (%d,%d) \n ", x, y);
       vlog(temp);
     }
