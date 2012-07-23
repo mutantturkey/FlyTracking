@@ -4,7 +4,7 @@ fly-tools
 FlyTracking
 ------------
 
-The FlyTracking application does the bulk of the work.
+The FlyTracking application does the bulk of the work. 
 
 Usage:
 
@@ -37,15 +37,6 @@ derive-background
 
 This tool will generate a common background image of a set of video frames (PNGs), based on the statistical mode of each pixel. 
 
-Warning: 
-
-  This will eat a huge chunk of memory. with 2,500 images at 173x174 pixels, it took almost 3Gb of ram.
-
 Usage:
 
   derive-background -i <input-list> -s <sample-file> -o <output-filename> 
-
-Todo:
-
-* reduce memory - zlib? less pointers?
-

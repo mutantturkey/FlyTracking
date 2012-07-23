@@ -32,3 +32,5 @@ The programs that will be built are located here:
 * ./fly-tools/FilterFlyMask
 * ./fly-tools/FlyTracking
 * ./fly-tools/mask-generator
+* ./fly-tools/standard-deviation
+* ./fly-tools/derive-background

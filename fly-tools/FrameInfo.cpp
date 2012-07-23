@@ -39,18 +39,6 @@ void FrameInfo::setIsSingleBlob(bool isSingleBlob)  {
 }
 void FrameInfo::setFOVector(vector<FlyObject > fov)  {
 	this->fOVector = fov;
-
-//	cout << "setting fov \n";
-//	FlyObject a = fOVector[0];
-//	pair<double,double> av = a.getVelocityV();
-//	cout << "velocity "<<av.first<<","<<av.second<<endl;
-//
-//	FlyObject b = fOVector[1];
-//	pair<double,double> bv = b.getVelocityV();
-//	cout << "velocity "<<bv.first<<","<<bv.second<<endl;
-	
-	
-	
 }
 void FrameInfo ::swapTheFlyObject() {
 	if (fOVector.size() > 1) {

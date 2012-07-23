@@ -970,7 +970,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           x = x + 1;
         }
 
-        cout << "putpixel "<<x<<","<<y<<endl;
+       // cout << "putpixel "<<x<<","<<y<<endl;
         putPixel(maskImage,x, y, 8);
         if (isInFemaleBlob == true)
           return 1;
