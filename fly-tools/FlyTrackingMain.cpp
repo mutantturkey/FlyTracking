@@ -21,22 +21,13 @@
 using namespace Magick;
 using namespace std;
 
+ofstream nullLog;
+ostream* output;
+
 const double PI = atan(1.0)*4.0;
 const double FACTOR_EIGEN = 100;
 const int STUCKING_TO_A_SINGLE_BLOB = 1;
 const int SEPARATING_FROM_SINGLE_BLOB = 2;
-
-
-typedef void (*loggerfunc) (const string&);
-
-void logOn(const string& toprint){
-  cout << toprint << endl;
-}
-
-void logOff(const string& toprint){
-}
-
-loggerfunc vlog = NULL;
 
 Image* residual;
 
@@ -134,10 +125,11 @@ void bubbleSort(vector<FlyObject > & fov) {
 
 void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
 {
-  vlog("In the beginning of the write hist\n");
-  vlog("dataMap size "+ dataMap.size());
+  *output << "In the beginning of the write hist" << endl;
+  *output << "dataMap size " << dataMap.size() << endl;
+
   if (dataMap.size() == 0) {
-    vlog("Empty histogram");
+    *output << "Empty histogram" << endl;
     ofstream fout(filename);
     fout <<"No entry in the histogram and size is " << dataMap.size() << endl;
     fout.close();
@@ -151,11 +143,11 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
 
 
   unsigned int first = front->first, last = back->first;
-  cout << "Min: " << first << endl<< "Max: " << last << endl<< "Count: " << last-first << endl;
+  *output << "Min: " << first << " " << "Max: " << last << " " << "Count: " << last-first << endl;
   //vector<unsigned int> hist(last-first, 0);
   vector<unsigned int> hist(last+1, 0);
 
-  cout << "hist size: " << hist.size() << endl;
+//  *output << "hist size: " << hist.size() << endl;
   try{
     for(unsigned int j = 0; j<first; j++) {
       hist[j] = 0;
@@ -276,7 +268,7 @@ void determineHeadDirection(int fileCounter) {
   pair<double,double> cLREV(-cLEV.first, -cLEV.second);
   //double largerDotProdPrevHeadAndCLREV = calculateDotProduct(pLH, clREV);
   if (largerDotProdPrevHeadAndCLEV >=0) {
-    cout << "Current eigen is in direction with the historical head"<<endl;
+    *output << "Current eigen is in direction with the historical head"<<endl;
     // record this vector for history
     double newHeadFirst = 0.1*cLEV.first+0.9*pLH.first;
     double newHeadSecond = 0.1*cLEV.second+0.9*pLH.second;
@@ -287,7 +279,7 @@ void determineHeadDirection(int fileCounter) {
     identifiedCLEV = cLEV;
 
   } else {
-    cout << "Current eigen is in opposite direction of the historical head\n";
+    *output << "Current eigen is in opposite direction of the historical head\n";
     // record this vector
     double newHeadFirst = 0.1*cLREV.first + 0.9*pLH.first;
     double newHeadSecond =0.1*cLREV.second+0.9*pLH.second;
@@ -301,12 +293,12 @@ void determineHeadDirection(int fileCounter) {
 
   // tracking the forward and backward movement of the fly object
   double largeDotProd = calculateDotProduct(cLVV, identifiedCLEV);
-  cout << "largerDotProd "<<largeDotProd<<endl;
+  *output << "largerDotProd "<<largeDotProd<<endl;
   if (largeDotProd >= 0) {
-    cout<<"Larger Dot prod is positive"<<endl;
+    *output<<"Larger Dot prod is positive"<<endl;
     //		cFLargeFO.setHeadIsInDirectionMAEV(true);
   } else {
-    cout<<"Larger Dot prod is negative"<<endl;
+    *output<<"Larger Dot prod is negative"<<endl;
     //		cFLargeFO.setHeadIsInDirectionMAEV(false);
   }
 
@@ -320,7 +312,7 @@ void determineHeadDirection(int fileCounter) {
   double smallerDotProdPrevHeadAndCSEV = calculateDotProduct(pSH, cSEV);
   pair<double, double> cSREV(-cSEV.first, -cSEV.second);
   if (smallerDotProdPrevHeadAndCSEV >=0) {
-    cout << "Current eigen is in direction with the historical head for the smaller fly object"<<endl;
+    *output << "Current eigen is in direction with the historical head for the smaller fly object"<<endl;
     // record this vector for history
     double newHeadFirst = 0.1*cSEV.first + 0.9*pSH.first;
     double newHeadSecond = 0.1*cSEV.second + 0.9*pSH.second;
@@ -330,7 +322,7 @@ void determineHeadDirection(int fileCounter) {
     // set the identified EV to current EV
     identifiedCSEV = cSEV;
   } else {
-    cout << "Current eigen is in direction with the historical head for the smaller fly object"<<endl;
+    *output << "Current eigen is in direction with the historical head for the smaller fly object"<<endl;
     // record this vector for history
     double newHeadFirst = 0.1*cSREV.first + 0.9*pSH.first;
     double newHeadSecond = 0.1*cSREV.second + 0.9*pSH.second;
@@ -412,10 +404,10 @@ cFSmallFO.setHead(newHead);
 double smallDotProd = calculateDotProduct(cSVV, cSEV);
 
 if (smallDotProd >= 0) {
-  cout << "Smaller dot product is positive"<<endl;
+  *output << "Smaller dot product is positive"<<endl;
   //		cFSmallFO.setHeadIsInDirectionMAEV(true);
 } else {
-  cout << "Smaller dot product is negative"<<endl;
+  *output << "Smaller dot product is negative"<<endl;
   //		cFSmallFO.setHeadIsInDirectionMAEV(false);
 }
 
@@ -429,16 +421,16 @@ currentFI.setFOVector(updatedFOVector);
 
 fIVector[fileCounter] = currentFI;
 
-//	cout << "checking the update"<<endl;
+//	*output << "checking the update"<<endl;
 //	FrameInfo tempFI = fIVector[fileCounter];
 //	
 //	vector<FlyObject > tempFIFOVector = tempFI.getFOVector();
 //	FlyObject tempFILFO = tempFIFOVector[0];
 //	FlyObject tempFISFO = tempFIFOVector[1];
 //	pair<double, double> tempFILFOVV = tempFILFO.getVelocityV();
-//	cout << "Large object velocity vector "<<tempFILFOVV.first<<","<<tempFILFOVV.second<<endl;
+//	*output << "Large object velocity vector "<<tempFILFOVV.first<<","<<tempFILFOVV.second<<endl;
 //	pair<double,double > tempFISFOVV = tempFISFO.getVelocityV();
-//	cout << "Small object velocity vector "<<tempFISFOVV.first<<","<<tempFISFOVV.second<<endl;
+//	*output << "Small object velocity vector "<<tempFISFOVV.first<<","<<tempFISFOVV.second<<endl;
 
 
 }
@@ -475,7 +467,7 @@ if (inWhite)
 // if the line started as a white pixel then discard the line fragment
 if (startedWhite == false) {
 int val = roundT(dist(x_init, y_init, x, y));
-//cout<<" val is = " << val << " at (x0,y0) = " << x_init << "," << y_init << " to (x1,y1) = " << x << "," << y <<endl;
+//*output<<" val is = " << val << " at (x0,y0) = " << x_init << "," << y_init << " to (x1,y1) = " << x << "," << y <<endl;
 len[val]++;
 } else
 startedWhite = false;
@@ -660,12 +652,10 @@ void putPixel(Image* maskImage, int x, int y, int color) {
   if (currPixelColor.mono() == true) {
     isInFemaleBlob = true;
     //isInBlackZone = false;
-    cout << "Hit the male object at "<<x<<","<<y<<endl;
+    *output << "Hit the male object at "<<x<<","<<y<<endl;
 
   } else {
-    char temp[128];
-    sprintf(temp, "Going through (%d,%d) \n ", x, y);
-    vlog(temp);
+    *output << "Going through" << x << "," << y << endl;
     pair<int,int> t(x,y);
     bresenhamLine.push_back(t);
   }
@@ -687,28 +677,28 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
   int octant = -1;
   if (( m >= 0 and m <= 1) and x0 < x1 ) { 
-    cout << "Octant 1"<<endl;
+    *output << "Octant 1"<<endl;
     octant = 1;
   } else if ((m > 1) and (y0 < y1)) {
-    cout << "Octant 2"<<endl;
+    *output << "Octant 2"<<endl;
     octant = 2;
   } else if ((m < -1) and (y0 < y1)) {
-    cout << "Octant 3"<<endl;
+    *output << "Octant 3"<<endl;
     octant = 3;
   } else if ((m <=0 and m >= -1) and (x0 > x1)) {
-    cout << "Octant 4"<<endl;
+    *output << "Octant 4"<<endl;
     octant = 4;
   } else if ((m > 0 and m <=1) and (x0 > x1) ) {
-    cout << "Octant 5"<<endl;
+    *output << "Octant 5"<<endl;
     octant = 5;
   }else if ((m > 1) and (y0 > y1) ) {
-    cout << "Octant 6"<<endl;
+    *output << "Octant 6"<<endl;
     octant = 6;
   }else if ((m < -1) and (y0 > y1) ) {
-    cout << "Octant 7"<<endl;
+    *output << "Octant 7"<<endl;
     octant = 7;
   } else if ((m <=0 and m >= -1) and (x0 < x1) ) {
-    cout << "Octant 8"<<endl;
+    *output << "Octant 8"<<endl;
     octant = 8;
   }
 
@@ -970,7 +960,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           x = x + 1;
         }
 
-       // cout << "putpixel "<<x<<","<<y<<endl;
+       // *output << "putpixel "<<x<<","<<y<<endl;
         putPixel(maskImage,x, y, 8);
         if (isInFemaleBlob == true)
           return 1;
@@ -979,7 +969,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       break;
 
     default:
-      cout << "No octant which should be a bug\n";
+      *output << "No octant which should be a bug\n";
       exit(0);
       break;
   }
@@ -1011,31 +1001,29 @@ int sequenceCondition(FrameInfo prevFI,FrameInfo currentFI) {
 
 void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob, bool unprocessed) {
 
-  cout << "Should draw "<<isFirst<<endl;
+  *output << "Should draw "<<isFirst<<endl;
   //ifstream inputFile;
   //inputFile.open(inputFileName.c_str());
   /*if (inputFile.fail() ) {
-    cout << "cannot open the input file that contains name of the input images\n";
+    *output << "cannot open the input file that contains name of the input images\n";
     exit(1);
     }*/
 
   string fileName = fnVector[startIndex];
   //inputFile>>fileName;
-  //inputFileName = "output/identified/"+fileName;
+  //inputFileName = "*output/identified/"+fileName;
   FrameInfo prevFI = fIVector[startIndex];
-  cout << "Extracting information for image "<< fnVector[startIndex] << endl;
-  cout << "----------------------------------------\n";
-  cout<<prevFI;
+  *output << "Extracting information for image "<< fnVector[startIndex] << endl;
+  *output<<prevFI;
   drawTheFlyObject(prevFI, fileName, isFirst, singleBlob, unprocessed);
   for (int i=startIndex+1; i<=endIndex; i++) {
     FrameInfo nextFI = fIVector[i];
-    cout << "Extracting information for image "<< fnVector[i] << endl;
-    cout << "----------------------------------------\n";
+    *output << "Extracting information for image "<< fnVector[i] << endl;
     //FrameInfo na = &nextFI;
-    cout<<nextFI;
+    *output<<nextFI;
     //inputFile>>fileName;
     fileName = fnVector[i];
-    //	inputFileName = "output/identified/"+fileName;
+    //	inputFileName = "*output/identified/"+fileName;
     drawTheFlyObject(nextFI, fileName,  isFirst, singleBlob, unprocessed);
   }
 
@@ -1055,7 +1043,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO) {
 
   double dotProdEVAndHH = calculateDotProduct(cFOEV, pFHH);
   if (dotProdEVAndHH > 0 ) {
-    cout << "Current head is in direction with the Previous frame Head(which is the historical head from the maxDistIndex)"<<endl;
+    *output << "Current head is in direction with the Previous frame Head(which is the historical head from the maxDistIndex)"<<endl;
     double newHeadX = 0.1*cFOEV.first+0.9*pFHH.first;
     double newHeadY = 0.1*cFOEV.second+0.9*pFHH.second;
     pair<double, double> newHead(newHeadX, newHeadY);
@@ -1063,7 +1051,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO) {
     currentFO.setHeadIsInDirectionMAEV(true);
 
   } else {
-    cout << "Current head is in direction with the previous frame head"<<endl;
+    *output << "Current head is in direction with the previous frame head"<<endl;
     double newHeadX = 0.1*cFOREV.first + 0.9*pFHH.first;
     double newHeadY = 0.1*cFOREV.second + 0.9*pFHH.second;
     pair<double, double> newHead(newHeadX, newHeadY);
@@ -1094,7 +1082,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO, bool prevFFOHD)
 
   double dotProdEVAndHD = calculateDotProduct(cFOEV, pFHeadDir);
   if (dotProdEVAndHD > 0 ) {
-    cout << "Current head is in direction with the Previous frame Head direction"<<endl;
+    *output << "Current head is in direction with the Previous frame Head direction"<<endl;
     /*double newHeadX = 0.1*cFOEV.first+0.9*pFHH.first;
       double newHeadY = 0.1*cFOEV.second+0.9*pFHH.second;
       pair<double, double> newHead(newHeadX, newHeadY);
@@ -1105,7 +1093,7 @@ void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO, bool prevFFOHD)
     currentFO.setHeadIsInDirectionMAEV(true);
 
   } else {
-    cout << "Current head is in reverse direction with the previous frame head direction"<<endl;
+    *output << "Current head is in reverse direction with the previous frame head direction"<<endl;
     /*double newHeadX = 0.1*cFOREV.first + 0.9*pFHH.first;
       double newHeadY = 0.1*cFOREV.second + 0.9*pFHH.second;
       pair<double, double> newHead(newHeadX, newHeadY);
@@ -1136,29 +1124,29 @@ void objectHeadDirection(FlyObject &currentFO, int saveEV=0) {
 
   double dotProdVVAndEV = calculateDotProduct(cFOEV, cFOVV);
   if (dotProdVVAndEV > 0 ) {
-    cout << "Current head is in direction with the velocity vector\n";
+    *output << "Current head is in direction with the velocity vector\n";
     // set the head to the eigen vector
     currentFO.setHead(cFOEV);
     currentFO.setHeadIsInDirectionMAEV(true);
 
     if (saveEV == 1) {
-      cout << "saving the eigen vector for the first object"<<endl;
+      *output << "saving the eigen vector for the first object"<<endl;
       evDirectionF.push_back(cFOEV);
     } else if (saveEV == 2){
-      cout << "saving the eigen vector for the second object"<<endl;
+      *output << "saving the eigen vector for the second object"<<endl;
       evDirectionS.push_back(cFOEV);			
     }
 
   } else if (dotProdVVAndEV < 0 ){
-    cout << "Current head is in reverse direction of the velocity vector"<<endl;
+    *output << "Current head is in reverse direction of the velocity vector"<<endl;
     currentFO.setHead(cFOREV);
     currentFO.setHeadIsInDirectionMAEV(false);
 
     if (saveEV == 1) {
-      cout << "saving the eigen vector for the first object"<<endl;
+      *output << "saving the eigen vector for the first object"<<endl;
       evDirectionF.push_back(cFOREV);
     } else if (saveEV == 2) {
-      cout << "saving the eigen vector for the second object"<<endl;
+      *output << "saving the eigen vector for the second object"<<endl;
       evDirectionS.push_back(cFOREV);			
     }
 
@@ -1167,10 +1155,10 @@ void objectHeadDirection(FlyObject &currentFO, int saveEV=0) {
     pair<double, double> zero(0.0,0.0);
 
     if (saveEV == 1) {
-      cout << "saving the zero eigen vector for the first object"<<endl;
+      *output << "saving the zero eigen vector for the first object"<<endl;
       evDirectionF.push_back(zero);
     } else if (saveEV == 2) {
-      cout << "saving the zero eigen vector for the second object"<<endl;
+      *output << "saving the zero eigen vector for the second object"<<endl;
       evDirectionS.push_back(zero);			
     }
 
@@ -1189,12 +1177,12 @@ void objectHeadDirection(FlyObject &currentFO, pair<double, double> cFV) {
 
   double dotProdVVAndEV = calculateDotProduct(cFOEV, cFV);
   if (dotProdVVAndEV > 0 ) {
-    cout << "Current head is in direction with the vector used\n";
+    *output << "Current head is in direction with the vector used\n";
     // set the head to the eigen vector
     currentFO.setHead(cFOEV);
     currentFO.setHeadIsInDirectionMAEV(true);
   } else {
-    cout << "Current head is in reverse direction with the vector used"<<endl;
+    *output << "Current head is in reverse direction with the vector used"<<endl;
     currentFO.setHead(cFOREV);
     currentFO.setHeadIsInDirectionMAEV(false);
   }
@@ -1205,7 +1193,7 @@ void objectHeadDirection(FlyObject &currentFO, pair<double, double> cFV) {
 void velocityDirection(int st, int end, pair<double, double > &velDirectionF, pair<double, double>&velDirectionS) {
 
   // find the average velocity vector
-  cout << "Finding average velocity vector from "<<fnVector[st]<<" to "<<fnVector[end]<<endl;
+  *output << "Finding average velocity vector from "<<fnVector[st]<<" to "<<fnVector[end]<<endl;
   FrameInfo prevFI = fIVector[st];
   vector<FlyObject > pFOVector = prevFI.getFOVector();
   FlyObject pFFirstFO = pFOVector[0];
@@ -1232,9 +1220,9 @@ void velocityDirection(int st, int end, pair<double, double > &velDirectionF, pa
   int velXSecond = cFSCentroid.first - pFSCentroid.first;
   int velYSecond = cFSCentroid.second - pFSCentroid.second;
 
-  cout << "Velocity vector"<<endl;
-  cout << "First = "<<velXFirst<<","<<velYFirst<<endl;
-  cout << "Second = "<<velXSecond<<","<<velYSecond<<endl;
+  *output << "Velocity vector"<<endl;
+  *output << "First = "<<velXFirst<<","<<velYFirst<<endl;
+  *output << "Second = "<<velXSecond<<","<<velYSecond<<endl;
 
   pair<double, double> cFVV(static_cast<double> (velXFirst), static_cast<double> (velYFirst));
   pair<double, double> cSVV(static_cast<double> (velXSecond), static_cast<double> (velYSecond));
@@ -1255,17 +1243,16 @@ double getSpeed(pair<double, double> vector) {
 
 }
 
-
 void velocityDirections(int stIndex, int endIndex) {
 
 
   velocityDirectionsF.clear();
   velocityDirectionsS.clear();
-
+  int i = 0;
   //int intervalLength = 5;
-  cout << "Initial velocity direction calculation"<<endl;
-  cout << "From index "<<stIndex<<" to "<<endIndex<<endl;
-  cout << "From "<<fnVector[stIndex]<<" to "<<fnVector[endIndex]<<endl;
+  *output << "Initial velocity direction calculation"<<endl;
+  *output << "From index "<<stIndex<<" to "<<endIndex<<endl;
+  *output << "From "<<fnVector[stIndex]<<" to "<<fnVector[endIndex]<<endl;
 
   /*overAllVelocityF.first = 0;
     overAllVelocityF.second = 0;
@@ -1273,7 +1260,7 @@ void velocityDirections(int stIndex, int endIndex) {
     overAllVelocityS.second = 0;
     */
 
-  for (int i=stIndex; i<endIndex; i=i++) {
+  for (i=stIndex; i<endIndex; i=i++) {
 
     pair<double, double > velDirectionF;
     pair<double, double > velDirectionS;
@@ -1298,20 +1285,20 @@ void velocityDirections(int stIndex, int endIndex) {
     normalizeVector(velDirectionS);
     velocityDirectionsS.push_back(velDirectionS);
 
-    cout << "Normalized velocity"<<endl;
-    cout << "First = " <<velDirectionF.first<<","<<velDirectionF.second<<endl;
-    cout << "Second = " <<velDirectionS.first<<","<<velDirectionS.second<<endl;
+    *output << "Normalized velocity"<<endl;
+    *output << "First = " <<velDirectionF.first<<","<<velDirectionF.second<<endl;
+    *output << "Second = " <<velDirectionS.first<<","<<velDirectionS.second<<endl;
 
     // set the velocity vector in the objects
     cFFirstFO.setVelocityV(velDirectionF);
     cFSecondFO.setVelocityV(velDirectionS);
 
     // find the first object head
-    cout<<fnVector[i]<<endl;
-    cout << "Calculating initial head direction from velocity direction for the first object and storing the ev in direction to the vv"<<endl;
+    *output<<fnVector[i]<<endl;
+    *output << "Calculating initial head direction from velocity direction for the first object and storing the ev in direction to the vv"<<endl;
     objectHeadDirection(cFFirstFO,1);
 
-    cout << "Calculating initial head direction from the velocity direction for the second object and storing the ev in direction to the vv"<<endl;
+    *output << "Calculating initial head direction from the velocity direction for the second object and storing the ev in direction to the vv"<<endl;
     objectHeadDirection(cFSecondFO,2);
 
 
@@ -1320,10 +1307,10 @@ void velocityDirections(int stIndex, int endIndex) {
     updatedFOVector.push_back(cFFirstFO);
     updatedFOVector.push_back(cFSecondFO);
     currentFI.setFOVector(updatedFOVector);
-    cout << "Updating the frame "<<fnVector[i]<<" after calculating its direction from velocity vector\n";
+    *output << "Updating the frame "<<fnVector[i]<<" after calculating its direction from velocity vector\n";
     fIVector[i] = currentFI;
 
-    /*//cout << fIVector[i];
+    /*//*output << fIVector[i];
     // first object overall velocity
     overAllVelocityF.first += velDirectionF.first;
     overAllVelocityF.second += velDirectionF.second;
@@ -1354,15 +1341,15 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
       st = j;
       positiveVelSeqSize++;
       flag = true;
-      //cout << "In first if positiveSize "<<positiveVelSeqSize<<endl;
+      //*output << "In first if positiveSize "<<positiveVelSeqSize<<endl;
 
     } else if (dotProd > 0 && flag == true) {
       positiveVelSeqSize++;
-      //cout << "In second if positive "<<positiveVelSeqSize<<endl;
+      //*output << "In second if positive "<<positiveVelSeqSize<<endl;
     } else {
       positiveVelSeqSize = 0;
       flag = false;
-      //cout << "Else\n";			
+      //*output << "Else\n";			
 
     }
 
@@ -1370,9 +1357,9 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
       maxSeqSize = positiveVelSeqSize;
       startIndex = st;
       endIndex = st+positiveVelSeqSize;
-      //cout << "maxseq updated \npositiveSize "<<positiveVelSeqSize<<endl;
-      //cout << "st "<<startIndex<<endl;
-      //cout << "end "<<endIndex<<endl;
+      //*output << "maxseq updated \npositiveSize "<<positiveVelSeqSize<<endl;
+      //*output << "st "<<startIndex<<endl;
+      //*output << "end "<<endIndex<<endl;
     }
 
 
@@ -1393,7 +1380,7 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
     }
 
     if (zero != true) {
-      cout << "All directions zero"<<endl;
+      *output << "All directions zero"<<endl;
       startIndex = 0;
       endIndex = 0;
     }
@@ -1404,9 +1391,9 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
 void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 
   if (object == 1) {
-    cout << "For first"<<endl;
+    *output << "For first"<<endl;
   } else {
-    cout << "For second"<<endl;
+    *output << "For second"<<endl;
   }
 
   /*double maxDotProduct = -1;
@@ -1421,16 +1408,16 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
     vector<FlyObject > cFOVector = currentFI.getFOVector();
     FlyObject cFFO = cFOVector[object-1];
     pair<double , double> cFVV = cFFO.getVelocityV();
-    //cout << "Velocity before normalization "<<cFVV.first<<","<<cFVV.second<<endl;
+    //*output << "Velocity before normalization "<<cFVV.first<<","<<cFVV.second<<endl;
     //normalizeVector(cFVV);
-    /*cout << "Velocity after normalization "<<cFVV.first<<","<<cFVV.second<<endl;
+    /**output << "Velocity after normalization "<<cFVV.first<<","<<cFVV.second<<endl;
       pair<double, double> cFEV = cFFO.getMajorAxisEV();
-      cout << "Eigen vector before normalization "<<cFEV.first<<","<<cFEV.second<<endl;
+      *output << "Eigen vector before normalization "<<cFEV.first<<","<<cFEV.second<<endl;
       normalizeVector(cFEV);
-      cout << "Eigen vector after normalization "<<cFEV.first<<","<<cFEV.second<<endl;
+      *output << "Eigen vector after normalization "<<cFEV.first<<","<<cFEV.second<<endl;
 
       double dotProd = calculateDotProduct(cFEV, cFVV);
-      cout << "Dot product absolute value for frame "<<fnVector[i]<<" : "<<abs(dotProd)<<" real value was "<<dotProd<<endl;
+      *output << "Dot product absolute value for frame "<<fnVector[i]<<" : "<<abs(dotProd)<<" real value was "<<dotProd<<endl;
 
       if (maxDotProduct < abs(dotProd) ) {
       maxDotProduct = abs(dotProd);
@@ -1438,7 +1425,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       }*/
 
     double velValue = cFFO.getSpeed();
-    cout << "speed at "<<fnVector[i]<<" "<<velValue<<endl;
+    *output << "speed at "<<fnVector[i]<<" "<<velValue<<endl;
     if (velValue > maxVelValue) {
       maxVelValue = velValue;
       maxVelValIndex = i;
@@ -1447,7 +1434,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 
   }
 
-  cout << "Maximum speed is chosen for for frame "<<fnVector[maxVelValIndex]<<" : "<<maxVelValue<<endl;
+  *output << "Maximum speed is chosen for for frame "<<fnVector[maxVelValIndex]<<" : "<<maxVelValue<<endl;
 
   // set the head direction according to the represntative velocity
   int t = maxVelValIndex;
@@ -1455,33 +1442,33 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
   vector<FlyObject > cFOVector = currentFI.getFOVector();
   FlyObject cFFirstFO = cFOVector[0];
   FlyObject cFSecondFO = cFOVector[1];
-  cout << "Setting representative head direction of frame "<<fnVector[t]<<endl;
+  *output << "Setting representative head direction of frame "<<fnVector[t]<<endl;
   foutLPS << "Setting representative head direction of frame "<<fnVector[t]<<endl;
 
   if (object == 1) {
-    cout << "Setting the head dir according to the representative velocity in the longest positive sequence at "<<fnVector[t]<<endl;
+    *output << "Setting the head dir according to the representative velocity in the longest positive sequence at "<<fnVector[t]<<endl;
     bool evDirFlag = cFFirstFO.getHeadIsInDirectionMAEV();
-    cout << "Before for the first object setting ev in velocity direction it is "<<evDirFlag<<endl;
+    *output << "Before for the first object setting ev in velocity direction it is "<<evDirFlag<<endl;
     objectHeadDirection(cFFirstFO);
     evDirFlag = cFFirstFO.getHeadIsInDirectionMAEV();
-    cout << "After setting ev in velocity direction it is "<<evDirFlag<<endl;
+    *output << "After setting ev in velocity direction it is "<<evDirFlag<<endl;
     cFOVector[0] = cFFirstFO;
     currentFI.setFOVector(cFOVector);
     fIVector[t] = currentFI;
   }
   else {
     pair<double, double> tempVelocity = cFSecondFO.getVelocityV();
-    //cout << "Velocity was "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
-    cout << "Setting the head direction according to the representative velocity in the longest positive sequence"<<endl;
+    //*output << "Velocity was "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
+    *output << "Setting the head direction according to the representative velocity in the longest positive sequence"<<endl;
 
     bool evDirFlag = cFSecondFO.getHeadIsInDirectionMAEV();
-    cout << "Before for the second object setting ev in velocity direction it is "<<evDirFlag<<endl;
+    *output << "Before for the second object setting ev in velocity direction it is "<<evDirFlag<<endl;
     objectHeadDirection(cFSecondFO);
     evDirFlag = cFSecondFO.getHeadIsInDirectionMAEV();
-    cout << "After setting ev in velocity direction it is "<<evDirFlag<<endl;
+    *output << "After setting ev in velocity direction it is "<<evDirFlag<<endl;
 
     //tempVelocity = cFSecondFO.getVelocityV();
-    //cout << "Velocity became "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
+    //*output << "Velocity became "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
     cFOVector[1] = cFSecondFO;
     currentFI.setFOVector(cFOVector);
     fIVector[t] = currentFI;
@@ -1490,8 +1477,8 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
   int intervalLength = 1;
   if ((e-s)> intervalLength) {
 
-    cout << "Propagating in the longest positive frame interval starting the direction from the frame "<<fnVector[t];
-    cout << " to "<<fnVector[e]<<endl;
+    *output << "Propagating in the longest positive frame interval starting the direction from the frame "<<fnVector[t];
+    *output << " to "<<fnVector[e]<<endl;
     FrameInfo prevFI = fIVector[t];
     vector<FlyObject > pFOVector = prevFI.getFOVector();
     FlyObject pFFirstFO = pFOVector[0];
@@ -1504,21 +1491,21 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       FlyObject cFSecondFO = cFOVector[1];
 
       if (object == 1) {
-        //cout << "First object extract"<<endl;
+        //*output << "First object extract"<<endl;
         objectHeadDirection(pFFirstFO, cFFirstFO, false);
-        //cout << "First object update"<<endl;
+        //*output << "First object update"<<endl;
         cFOVector[0] = cFFirstFO;
 
         pFFirstFO = cFFirstFO;
 
       } else {
-        //cout << "Second object extract"<<endl;
+        //*output << "Second object extract"<<endl;
         pair<double, double> tempVelocity = cFSecondFO.getVelocityV();
-        //cout << "Velocity was "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
+        //*output << "Velocity was "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
         objectHeadDirection(pFSecondFO, cFSecondFO, false);
-        //cout << "Second object update"<<endl;
+        //*output << "Second object update"<<endl;
         tempVelocity = cFSecondFO.getVelocityV();
-        //cout << "Velocity became "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
+        //*output << "Velocity became "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
         cFOVector[1] = cFSecondFO;
 
         pFSecondFO = cFSecondFO;
@@ -1531,7 +1518,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 
     }
 
-    cout << "propagating from "<<fnVector[t]<<" to "<<fnVector[s]<<endl;
+    *output << "propagating from "<<fnVector[t]<<" to "<<fnVector[s]<<endl;
     prevFI = fIVector[t];
     pFOVector = prevFI.getFOVector();
     pFFirstFO = pFOVector[0];
@@ -1544,17 +1531,17 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       FlyObject cFSecondFO = cFOVector[1];
 
       if (object == 1) {
-        //cout << "First object extract"<<endl;
+        //*output << "First object extract"<<endl;
         objectHeadDirection(pFFirstFO, cFFirstFO, false);
-        //cout << "First object update"<<endl;
+        //*output << "First object update"<<endl;
         cFOVector[0] = cFFirstFO;
 
         pFFirstFO = cFFirstFO;
 
       } else {
-        //cout << "Second object extract"<<endl;
+        //*output << "Second object extract"<<endl;
         objectHeadDirection(pFSecondFO, cFSecondFO, false);
-        //cout << "Second object update"<<endl;
+        //*output << "Second object update"<<endl;
         cFOVector[1] = cFSecondFO;
 
         pFSecondFO = cFSecondFO;
@@ -1577,7 +1564,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
   FlyObject pFSecondFO = pFOVector[1];
 
   if (e < origEnd) {
-    cout << "Propagating front from "<<fnVector[e]<<" to "<<fnVector[origEnd]<<endl;		
+    *output << "Propagating front from "<<fnVector[e]<<" to "<<fnVector[origEnd]<<endl;		
 
     for (int i=e+1; i<=origEnd; i++) {
       FrameInfo currentFI = fIVector[i];
@@ -1586,17 +1573,17 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       FlyObject cFSecondFO = cFOVector[1];
 
       if (object == 1) {
-        //cout << "First object extract"<<endl;
+        //*output << "First object extract"<<endl;
         objectHeadDirection(pFFirstFO, cFFirstFO, false);
-        //cout << "First object update"<<endl;
+        //*output << "First object update"<<endl;
         cFOVector[0] = cFFirstFO;
 
         pFFirstFO = cFFirstFO;
 
       } else {
-        //cout << "Second object extract"<<endl;
+        //*output << "Second object extract"<<endl;
         objectHeadDirection(pFSecondFO, cFSecondFO, false);
-        //cout << "Second object update"<<endl;
+        //*output << "Second object update"<<endl;
         cFOVector[1] = cFSecondFO;
 
         pFSecondFO = cFSecondFO;
@@ -1618,7 +1605,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
   pFSecondFO = pFOVector[1];
 
   if (s > origStart ) {
-    cout << "Propagating down wards from "<<fnVector[s]<<" to "<<fnVector[origStart]<<endl;
+    *output << "Propagating down wards from "<<fnVector[s]<<" to "<<fnVector[origStart]<<endl;
     for (int i=s-1; i>=origStart; i--) {
       FrameInfo currentFI = fIVector[i];
       vector<FlyObject > cFOVector = currentFI.getFOVector();
@@ -1626,17 +1613,17 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       FlyObject cFSecondFO = cFOVector[1];
 
       if (object == 1) {
-        //cout << "First object extract"<<endl;
+        //*output << "First object extract"<<endl;
         objectHeadDirection(pFFirstFO, cFFirstFO, false);
-        //cout << "First object update"<<endl;
+        //*output << "First object update"<<endl;
         cFOVector[0] = cFFirstFO;
 
         pFFirstFO = cFFirstFO;
 
       } else {
-        //cout << "Second object extract"<<endl;
+        //*output << "Second object extract"<<endl;
         objectHeadDirection(pFSecondFO, cFSecondFO, false);
-        //cout << "Second object update"<<endl;
+        //*output << "Second object update"<<endl;
         cFOVector[1] = cFSecondFO;
 
         pFSecondFO = cFSecondFO;
@@ -1656,8 +1643,8 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
 // find the head direction from the collsion point to backward
 void calculateHeadDirection(int st, int end, int maxDistIndex) {
 
-  cout << "From file "<<fnVector[st]<<" to "<<fnVector[end]<<endl;
-  //cout << "Assigning object head direction between Index "<<mid<<" to startIndex "<<st<<endl;
+  *output << "From file "<<fnVector[st]<<" to "<<fnVector[end]<<endl;
+  //*output << "Assigning object head direction between Index "<<mid<<" to startIndex "<<st<<endl;
 
   // calculate the velocity directions first
   // clear evDirectionF and evDirectionS to store the new evs for the current sequence
@@ -1666,39 +1653,39 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
 
   velocityDirections(st, end);
 
-  cout << "Size of evDirectionF "<<evDirectionF.size()<<endl;
-  cout << "Size of evDirectionS "<<evDirectionS.size()<<endl;
+  *output << "Size of evDirectionF "<<evDirectionF.size()<<endl;
+  *output << "Size of evDirectionS "<<evDirectionS.size()<<endl;
 
 
   // debug
-  cout << "------------ALL VELOCITY AND CORRESPONDING EV-------------\n";
+  *output << "------------ALL VELOCITY AND CORRESPONDING EV-------------\n";
   int a;
   for (a=0; a < velocityDirectionsF.size(); a++) {
 
-    cout << "For frame "<<fnVector[a+st]<<endl;
+    *output << "For frame "<<fnVector[a+st]<<endl;
 
     pair<double, double> z = velocityDirectionsF[a];
     pair<double, double> zEV = evDirectionF[a];
-    cout <<" First object velocity = "<<z.first<<","<<z.second<<endl;
-    cout <<" First object ev       = "<<zEV.first<<","<<zEV.second<<endl;
+    *output <<" First object velocity = "<<z.first<<","<<z.second<<endl;
+    *output <<" First object ev       = "<<zEV.first<<","<<zEV.second<<endl;
 
     pair<double, double> w = velocityDirectionsS[a];
     pair<double, double> wEV = evDirectionS[a];
 
-    cout << "Second object velocity = "<<w.first<<","<<w.second<<endl;
-    cout << "Second object ev       = "<<wEV.first<<","<<wEV.second<<endl;
+    *output << "Second object velocity = "<<w.first<<","<<w.second<<endl;
+    *output << "Second object ev       = "<<wEV.first<<","<<wEV.second<<endl;
 
 
   }
-  cout << "Last frame index wont have velocity a+st("<<(a+st)<<") = end("<<end<<") "<<fnVector[a+st]<<endl;
-  cout << "------------END-------------\n";
+  *output << "Last frame index wont have velocity a+st("<<(a+st)<<") = end("<<end<<") "<<fnVector[a+st]<<endl;
+  *output << "------------END-------------\n";
 
   int s;
   int e;
   int fs,fe;
   foutLPS<<"------------------------------------------------------------------"<<endl;
   largestIncreasingPositiveDotProductSeq(evDirectionF, s, e);
-  cout << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
+  *output << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
   int si = s + st;
   int ei = e + st;
   foutLPS << "For first object max positive directions from "<<fnVector[si]<<" to "<<fnVector[ei]<<endl;
@@ -1708,7 +1695,7 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
   e = 0;
 
   largestIncreasingPositiveDotProductSeq(evDirectionS, s, e);
-  cout << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
+  *output << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
   si = s + st;
   ei = e + st;
   foutLPS << "For second object max positive directions from "<<fnVector[si]<<" to "<<fnVector[ei]<<endl;
@@ -1736,19 +1723,19 @@ void objectCorrespondence(FrameInfo &prevFI, FrameInfo &currentFI) {
   FlyObject cFSmallFO = cFOVector[1];
 
   double distLTL = euclideanDist(pFLargeFO, cFLargeFO);
-  cout << "previousFirst to currentFirst "<<distLTL<<endl;
+  *output << "previousFirst to currentFirst "<<distLTL<<endl;
 
   double distLTS = euclideanDist(pFLargeFO, cFSmallFO);
-  cout << "prevFirst to currentSecond "<<distLTS<<endl;
+  *output << "prevFirst to currentSecond "<<distLTS<<endl;
 
   double min1 = min(distLTL, distLTS);
-  cout<<"min of FTF and FTS is "<<min1<<endl;
+  *output<<"min of FTF and FTS is "<<min1<<endl;
 
   double distSTL = euclideanDist(pFSmallFO, cFLargeFO);
-  cout << "previousSecond to currentLarge "<<distSTL<<endl;
+  *output << "previousSecond to currentLarge "<<distSTL<<endl;
 
   double distSTS =euclideanDist(pFSmallFO, cFSmallFO);
-  cout << "prevSecond to currentSecond "<<distSTS<<endl;
+  *output << "prevSecond to currentSecond "<<distSTS<<endl;
 
   double min2 = min(distSTL, distSTS);
 
@@ -1758,12 +1745,12 @@ void objectCorrespondence(FrameInfo &prevFI, FrameInfo &currentFI) {
 
   if (min1 < min2) {
     if (distLTS == min1) {
-      cout<<"Shortest distance is from the previous frame first object. And shortest distance is from previos first object to current second object so we need to swap the objects in current frame"<<endl;
+      *output<<"Shortest distance is from the previous frame first object. And shortest distance is from previos first object to current second object so we need to swap the objects in current frame"<<endl;
       currentFI.swapTheFlyObject();
     }
   } else {
     if (distSTL == min2) {
-      cout << "Shortest distance is from the previous frame second object. And shortest distance is from previous second object to current first object so we need to swap the objects in the current frame"<<endl;
+      *output << "Shortest distance is from the previous frame second object. And shortest distance is from previous second object to current first object so we need to swap the objects in the current frame"<<endl;
       currentFI.swapTheFlyObject();
     }
   }
@@ -1775,11 +1762,11 @@ double euclideanDist(FlyObject a, FlyObject b) {
   pair<int, int> aCentroid = a.getCentroid();
   pair<int,int> bCentroid = b.getCentroid();
 
-  //cout << "Distance from "<<aCentroid.first<<","<<aCentroid.second<<" to "<<bCentroid.first<<","<<bCentroid.second<<endl;
+  //*output << "Distance from "<<aCentroid.first<<","<<aCentroid.second<<" to "<<bCentroid.first<<","<<bCentroid.second<<endl;
   double x2 = pow((static_cast<double> (aCentroid.first)-static_cast<double> (bCentroid.first)), 2.0);
   double y2 = pow((static_cast<double> (aCentroid.second)-static_cast<double> (bCentroid.second)), 2.0);
   double dist = sqrt((x2+y2));
-  cout << dist<<endl;
+  *output << dist<<endl;
 
   return dist;
 }
@@ -1801,14 +1788,14 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
     if (currDist > maxDist) {
       maxDist = currDist;
       maxDistIndex = i;
-      cout << "New max distance" << maxDist << " at the frame number "<<i;
-      cout << endl;
+      *output << "New max distance" << maxDist << " at the frame number "<<i;
+      *output << endl;
     }
 
   }
 
-  cout << "Maximum distance between the frame found at the index "<<maxDistIndex<<endl;
-  cout << "Assigning object correspondance between maxDistIndex "<<maxDistIndex<<" to startIndex "<<startOfATrackSequence<<endl;
+  *output << "Maximum distance between the frame found at the index "<<maxDistIndex<<endl;
+  *output << "Assigning object correspondance between maxDistIndex "<<maxDistIndex<<" to startIndex "<<startOfATrackSequence<<endl;
   // assign closest distance object association before the between frames startOfASeq to maxDistIndex
   FrameInfo prevFI = fIVector[maxDistIndex];
   for (int i=maxDistIndex-1; i>=startOfATrackSequence; i--) {
@@ -1820,13 +1807,13 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
     prevFI = currentFI;
 
   }
-  cout << "Assigning object correspondance between maxDistIndex+1 "<<(maxDistIndex+1)<<" to endIndex "<<endOfATrackSequence<<endl;
+  *output << "Assigning object correspondance between maxDistIndex+1 "<<(maxDistIndex+1)<<" to endIndex "<<endOfATrackSequence<<endl;
   // assign closest distance object association after the maxDistIndex to endOfSeq
   prevFI = fIVector[maxDistIndex];
   for (int i=maxDistIndex+1; i<=(endOfATrackSequence); i++) {
     FrameInfo currentFI = fIVector[i];
 
-    cout << "Object correspondance frame number "<<i<<endl;
+    *output << "Object correspondance frame number "<<i<<endl;
 
     objectCorrespondence(prevFI, currentFI);
 
@@ -1849,18 +1836,18 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
     sequenceFirstAverage += cFFirstFO.getArea();
     sequenceSecondAverage += cFSecondFO.getArea();
 
-    cout << "For frame number "<<i<<"\n";
-    cout << "SequenceFirst area sum = "<<sequenceFirstAverage<<endl;
-    cout << "SequenceSecond area sum = "<<sequenceSecondAverage<<endl;
+    *output << "For frame number "<<i<<"\n";
+    *output << "SequenceFirst area sum = "<<sequenceFirstAverage<<endl;
+    *output << "SequenceSecond area sum = "<<sequenceSecondAverage<<endl;
   }
 
   sequenceFirstAverage /= (endOfATrackSequence-startOfATrackSequence + 1);
   sequenceSecondAverage /= (endOfATrackSequence-startOfATrackSequence + 1);
 
-  cout << "----------------------------------------------------\n";
-  cout << "SequenceFirst average area = "<<sequenceFirstAverage<<endl;
-  cout << "SequenceSecond average area = "<<sequenceSecondAverage<<endl;
-  cout << "----------------------------------------------------\n";
+  *output << "----------------------------------------------------\n";
+  *output << "SequenceFirst average area = "<<sequenceFirstAverage<<endl;
+  *output << "SequenceSecond average area = "<<sequenceSecondAverage<<endl;
+  *output << "----------------------------------------------------\n";
 
   if (sequenceFirstAverage > sequenceSecondAverage) {
     foutLPS << "First object is the female and avg size is "<<sequenceFirstAverage<<" and "<<sequenceSecondAverage<<endl;
@@ -1869,16 +1856,16 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
   }
 
   // calculating the head direction from the collision time to backward
-  cout << "calculating the head direction "<<startOfATrackSequence<<" to "<<endOfATrackSequence<<endl;
+  *output << "calculating the head direction "<<startOfATrackSequence<<" to "<<endOfATrackSequence<<endl;
   foutLPS<<"calculating the head direction "<<startOfATrackSequence<<" to "<<endOfATrackSequence<<endl;
   calculateHeadDirection(startOfATrackSequence, endOfATrackSequence, maxDistIndex);
 
   if (sequenceFirstAverage > sequenceSecondAverage) {
-    cout << "First sequence is the object A"<<endl;
+    *output << "First sequence is the object A"<<endl;
     drawTheSequence(startOfATrackSequence, endOfATrackSequence, 1, false, false);
   }
   else {
-    cout << "Second sequence is the object A"<<endl;
+    *output << "Second sequence is the object A"<<endl;
     drawTheSequence(startOfATrackSequence, endOfATrackSequence, 0, false, false);
   }
 
@@ -1889,6 +1876,7 @@ int diagLength;
 ofstream foutSt;
 ofstream foutDebugCen;
 ofstream foutDebugSpeed;
+
 
 int main(int argc, char **argv)
 {
@@ -1930,13 +1918,14 @@ int main(int argc, char **argv)
         break;
     }
 
+
   if(verbose) {
-    vlog =  &logOn;
+    output = &cout;
   }	else {
-    vlog = &logOff;
+    output = &nullLog; 
   }
 
-  vlog("verbose logging out");
+  *output << "verbose logging out" << endl;
 
   if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
     cerr <<  usage << endl;
@@ -1952,12 +1941,12 @@ int main(int argc, char **argv)
   // save the input file name
 
   if (inputFile.fail() ) {
-    cout << "cannot open the input file that contains name of the input images\n";
+    cerr << "cannot open the input file that contains name of the input images\n";
     exit(1);
   }
 
   string statFileName = finalOutputPath + outputFilePrefix + "_statFile.txt";
-  //cout << "Statfilename is "<<statFileName<<endl;
+  //*output << "Statfilename is "<<statFileName<<endl;
   foutSt.open(statFileName.c_str());
   if (foutSt.fail()) {
     cerr<<"cannot open the statfile"<<endl;
@@ -1968,7 +1957,7 @@ int main(int argc, char **argv)
   string foutDebugCenFN = finalOutputPath + outputFilePrefix + "_statFileDebug.txt";
   foutDebugCen.open(foutDebugCenFN.c_str());
   if (foutDebugCen.fail()) {
-    cout << "cannot open the statDebug file"<<endl;
+    cerr << "cannot open the statDebug file"<<endl;
     exit(1);
   }
 
@@ -1976,14 +1965,14 @@ int main(int argc, char **argv)
   string foutDebugSpeedFN = finalOutputPath + outputFilePrefix + "_speedDebug.txt";
   foutDebugSpeed.open(foutDebugSpeedFN.c_str());
   if (foutDebugSpeed.fail()) {
-    cout << "cannot open the speedDebug file"<<endl;
+    cerr << "cannot open the speedDebug file"<<endl;
     exit(1);
   }
 
   // open the file for statistics
   string lPSFileName("LongestPositive.txt");
   lPSFileName = finalOutputPath + outputFilePrefix + "_" + lPSFileName;
-  cout << "LongestPositive.txt file name is "<<lPSFileName<<endl;
+  *output << "LongestPositive.txt file name is "<<lPSFileName<<endl;
   foutLPS.open(lPSFileName.c_str());
 
   unsigned int objCount = 0;
@@ -2007,7 +1996,7 @@ int main(int argc, char **argv)
     int span = 5;
     string tempString = fileName.substr(fi+1,span);
     int frameCounter = atoi(tempString.c_str());
-    //cout << frameCounter<<endl;
+    //*output << frameCounter<<endl;
 
     string fileNameForSave = fileName;
 
@@ -2015,12 +2004,12 @@ int main(int argc, char **argv)
     fnVector.push_back(fileName);
 
     fileName = maskImagePath + fileName;
-    cout << "Reading file "<<fileName<<endl;
+    *output << "Reading file "<<fileName<<endl;
     Image* img = new Image(fileName.c_str());
     int width = img->columns(),height = img->rows();
     diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
 
-    //cout << "Diagonal length is "<<diagLength<<endl;
+    //*output << "Diagonal length is "<<diagLength<<endl;
     //		Image* imgWithInfo;
     //		imgWithInfo = new Image(fileName.c_str());
     sprintf(buffer,"%ix%i",width,height);
@@ -2029,14 +2018,14 @@ int main(int argc, char **argv)
     // residual image is initialized with black representing not visited.
     residual = new Image(buffer, "black");
 
-    //cout<<"reading file "<<fileName<<endl;
+    //*output<<"reading file "<<fileName<<endl;
 
     tempFOV.clear();
 
     for (int x = 0; x<width; x++) {
       for (int y = 0; y<height; y++) {
 
-        //cout<<"comes here"<<endl;
+        //*output<<"comes here"<<endl;
         shape.clear();
         findObj(img, x, y, shape, true, true);
         unsigned int s = shape.size();
@@ -2044,7 +2033,7 @@ int main(int argc, char **argv)
         if ( s > 0 )
         {
 
-          //		cout << "size of the object is: " << s <<endl;
+          //		*output << "size of the object is: " << s <<endl;
           vector<double> eigenVal = covariantDecomposition(shape);
 
           {					
@@ -2071,7 +2060,7 @@ int main(int argc, char **argv)
     delete img;
     delete residual;
 
-    //		cout<<"Sorting the objects according to size"<<endl;
+    //		*output<<"Sorting the objects according to size"<<endl;
     //		bubbleSort(tempFOV);
 
     fOVector.clear();
@@ -2090,7 +2079,7 @@ int main(int argc, char **argv)
 
       // if start as a single blob
       if (fileCounter == 0) {
-        //	cout << "Start as a single blob"<<endl;
+        //	*output << "Start as a single blob"<<endl;
         startOfAOneObject = fileCounter;
       }
 
@@ -2128,7 +2117,7 @@ int main(int argc, char **argv)
 
         // draw the single blob sequence
         endOfAOneObject = fileCounter - 1;
-        cout << "Only one object StartIndex "<<startOfAOneObject<<" endIndex "<<endOfAOneObject<<" and seqSize "<<sequenceSize<<endl;
+        *output << "Only one object StartIndex "<<startOfAOneObject<<" endIndex "<<endOfAOneObject<<" and seqSize "<<sequenceSize<<endl;
         // use the two variables (startOfAOneObject, endOfAOneObject) pair to draw the single-blob objects.
         // third parameter is used to indicate whether the current sequence is SINGLE_BLOB. So true is passed.
         // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
@@ -2142,18 +2131,18 @@ int main(int argc, char **argv)
 
 
       if(seqCond == STUCKING_TO_A_SINGLE_BLOB) {
-        cout << "StartIndex "<<startOfATrackSequence<<" endIndex "<<endOfATrackSequence<<" and seqSize "<<sequenceSize<<endl;	
+        *output << "StartIndex "<<startOfATrackSequence<<" endIndex "<<endOfATrackSequence<<" and seqSize "<<sequenceSize<<endl;	
         // if a sequence size is greater than 15 then it is processed. endOfATrackSequence - startOfATrackSequence == 15 when the size of the sequence is 16.
         // endOfATrackSequence - startOfATrackSequence > 15 when the size of the sequence is > 16.
         if ((endOfATrackSequence - startOfATrackSequence) >=15 ) {
           processASequence(startOfATrackSequence, endOfATrackSequence);
-          cout << "Done processing"<<endl;
+          *output << "Done processing"<<endl;
         } else {
           // use the two variables (startOfATrackSequence, endOfATrackSequence) pair to draw the unprocessed frames.
           // third parameter is used to indicate whether the current sequence is not actual SINGLE_BLOB. So false is passed.
           // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
           // since we are considering the sequence length <  15 to be a single blob state, so pass false parameter.
-          cout << "Sequence is only "<<(endOfATrackSequence-startOfATrackSequence+1)<<" images long so assumed as a single blob"<<endl;
+          *output << "Sequence is only "<<(endOfATrackSequence-startOfATrackSequence+1)<<" images long so assumed as a single blob"<<endl;
           drawTheSequence(startOfATrackSequence, endOfATrackSequence, 0, false, true);
 
           // increase the unprocessed frame counter
@@ -2165,10 +2154,10 @@ int main(int argc, char **argv)
         }
 
         initSequence();
-        //cout << "Start of a single blob "<<startOfAOneObject<<" and end of a single blob "<<endOfAOneObject<<endl;
+        //*output << "Start of a single blob "<<startOfAOneObject<<" and end of a single blob "<<endOfAOneObject<<endl;
 
       }
-      //cout << "Done for "<<fnVector[fileCounter-1]<<endl;
+      //*output << "Done for "<<fnVector[fileCounter-1]<<endl;
     }
 
     sequenceSize++;
@@ -2177,7 +2166,7 @@ int main(int argc, char **argv)
     fileCounter++;
 
 
-    //cout << "Going to the next step"<<endl;
+    //*output << "Going to the next step"<<endl;
 
     //open this after debug
     /**/
@@ -2185,7 +2174,7 @@ int main(int argc, char **argv)
 
   }
 
-  //cout << "No more files "<<startOfAOneObject<<" "<<endOfAOneObject<<endl;
+  //*output << "No more files "<<startOfAOneObject<<" "<<endOfAOneObject<<endl;
   inputFile.close();
 
   //open this after debug
@@ -2193,13 +2182,13 @@ int main(int argc, char **argv)
   if (startOfATrackSequence!=-1 && endOfATrackSequence == -1) {
     if ((sequenceSize-1) > 15 ) {
 
-      cout << "Last sequence that does not stick to a single blob status startIndex "<<startOfATrackSequence<<" endIndex "<<(sequenceSize+startOfATrackSequence-2)<<endl;
+      *output << "Last sequence that does not stick to a single blob status startIndex "<<startOfATrackSequence<<" endIndex "<<(sequenceSize+startOfATrackSequence-2)<<endl;
       processASequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2));
-      cout << "Done processing"<<endl;
+      *output << "Done processing"<<endl;
 
     } else {
       // this case was not handled earlier. It can happen that the flies are separated during the last sequences and less than 15 frames long.
-      cout << "Sequence is only "<<(sequenceSize-1)<<" images long so assumed as a single blob"<<endl;
+      *output << "Sequence is only "<<(sequenceSize-1)<<" images long so assumed as a single blob"<<endl;
       drawTheSequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2), 0, false, true);
       foutSt<<"-------------------------------"<<endl;
       foutSt<<"Unprocessed size "<<(sequenceSize-1)<<endl;
@@ -2210,7 +2199,7 @@ int main(int argc, char **argv)
     initSequence();
 
   } else if (startOfAOneObject != -1 && endOfAOneObject == -1) {
-    cout << "Last sequence that does not separate from one object state\n";
+    *output << "Last sequence that does not separate from one object state\n";
     drawTheSequence(startOfAOneObject, (sequenceSize+startOfAOneObject - 2), 0, true, false);
     endOfAOneObject = -1;
     startOfAOneObject = -1;
@@ -2220,9 +2209,8 @@ int main(int argc, char **argv)
 
   string cDDistFileName = finalOutputPath + outputFilePrefix + "_centroidDist.txt";
 
-  string hDAngleDistFileName = finalOutputPath + outputFilePrefix + "_headDirAngleDist.txt";
+  string hDAngleDistFileName = finalOutputPath + outputFilePrefix + "_headDist.txt";
 
-  // speed distribution filename
   string speedDistFileName = finalOutputPath + outputFilePrefix + "_speedDist.txt";
 
   writeHist(cDDistFileName.c_str(), centroidDistanceMap);
@@ -2288,18 +2276,16 @@ int hitTheFly(Image* maskImage, int &intersectX, int &intersectY) {
     ColorMono currPixelColor = ColorMono(maskImage->pixelColor(x,y));
 
     if (currPixelColor.mono() == true) {
-      cout << "Hit the target fly"<<" "<<x<<","<<y<<endl;
+      *output << "Hit the target fly"<<" "<<x<<","<<y<<endl;
       intersectX = x;
       intersectY = y;
       return 1;
     } else if (currPixelColor.mono() == false and ( x == 0 || x == (maskImageWidth-1) || y == 0 || y == (maskImageHeight-1))) {
-      cout << "Is at the boundary"<<endl;
+      *output << "Is at the boundary"<<endl;
       return 2;
     }
     else {
-      char temp[128];
-      sprintf(temp, "Going through (%d,%d) \n ", x, y);
-      vlog(temp);
+      *output << "Going through" << x << "," << y << endl;
     }
 
 
@@ -2313,7 +2299,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
 
   string segmImageFileName = maskImagePath + fileName;
 
-  cout << "Segmented image "<<segmImageFileName<<"\n";
+  *output << "Segmented image "<<segmImageFileName<<"\n";
   if (desiredSize == otherSize) {
     foutDebugCen<<"File name "<<segmImageFileName<<endl;
     foutDebugCen<<"MaleSize == FemaleSize\n";
@@ -2335,11 +2321,11 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   bool found = false;	
   vector<pair<int, int> > foundShape;
   vector<pair<int,int> > shape;
-  cout<<"Detecting the male object for finding the start point"<<endl;
+  *output<<"Detecting the male object for finding the start point"<<endl;
   for (int x = 0; x<width and found == false; x++) {
     for (int y = 0; y<height and found == false; y++) {
 
-      //cout<<"comes here"<<endl;
+      //*output<<"comes here"<<endl;
       shape.clear();
       findObj(image, x, y, shape, true, true);
       unsigned int s = shape.size();
@@ -2347,18 +2333,18 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
       if ( s > 0 )
       {
 
-        cout << "size of the object is: " << s <<endl;
+        *output << "size of the object is: " << s <<endl;
 
         if (desiredSize == otherSize) {
 
           // debug:
-          cout << "Inside the maleSize == femaleSize where (cen_x, cen_y) = "<<cen_x<<","<<cen_y<<endl;
+          *output << "Inside the maleSize == femaleSize where (cen_x, cen_y) = "<<cen_x<<","<<cen_y<<endl;
           pair<int, int> tmpCentroid = getCentroid(shape);
           foutDebugCen<<"tmpCentroid.first, tmpCentroid.second = ("<<tmpCentroid.first<<","<<tmpCentroid.second<<")"<<endl;
           if (tmpCentroid.first == cen_x and tmpCentroid.second == cen_y) {
 
             found = true;
-            cout << "Detected the desired object when the sizes are equal"<<endl;
+            *output << "Detected the desired object when the sizes are equal"<<endl;
             foundShape = shape;
             foutDebugCen<<"Found by desired object after recomputing the centroid"<<endl;
           }
@@ -2367,13 +2353,13 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
           /*for (int l=0; l<s and found == false; l++) {
 
             pair<int, int> point = shape[l];
-            cout << "point.first, point.second "<<point.first<<","<<point.second<<endl;
+            *output << "point.first, point.second "<<point.first<<","<<point.second<<endl;
 
           // this should give most of the time when the centroid is not a black pixel
           // a centroid can be black pixel when the shape of the fly is distorted inside
           if (point.first == cen_x and point.second == cen_y) {
           found = true;
-          cout << "Detected the male object when the sizes of male/female are equal"<<endl;
+          *output << "Detected the male object when the sizes of male/female are equal"<<endl;
           foundShape = shape;
           }
           }*/
@@ -2381,12 +2367,12 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
 
         } else {
 
-          cout<<"Elseblock: Inside the desiredSize is not equal the otherSize"<<endl;
+          *output<<"Elseblock: Inside the desiredSize is not equal the otherSize"<<endl;
           if (s == desiredSize) {
             found = true;
-            cout << "Detected the desired object just comparing the sizes"<<endl;
+            *output << "Detected the desired object just comparing the sizes"<<endl;
             foundShape = shape;
-            cout<<"foundshape size "<<foundShape.size()<<endl;
+            *output<<"foundshape size "<<foundShape.size()<<endl;
           }
         }
       }
@@ -2394,9 +2380,9 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   }
 
   if (found == true) {
-    cout<<"foundshape is assigned a value"<<endl;
+    *output<<"foundshape is assigned a value"<<endl;
   } else {
-    cout<<"ERROR: foundshape is not assigned a value so the next step would draw a line over an empty image"<<endl;
+    *output<<"ERROR: foundshape is not assigned a value so the next step would draw a line over an empty image"<<endl;
     exit(0);
   }
 
@@ -2423,8 +2409,8 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   x1 = static_cast<int> (ev_x);
   y1 = static_cast<int> (ev_y);
 
-  cout<<"Endpoint: centroid (x0,y0)==("<<x0<<","<<y0<<")"<<endl;
-  cout<<"Startpoint: OutsidePointInEVDirection (x1,y1)==("<<x1<<","<<y1<<")"<<endl;
+  *output<<"Endpoint: centroid (x0,y0)==("<<x0<<","<<y0<<")"<<endl;
+  *output<<"Startpoint: OutsidePointInEVDirection (x1,y1)==("<<x1<<","<<y1<<")"<<endl;
 
   Image* maskImage = new Image(buffer, "black");
 
@@ -2440,20 +2426,20 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   //maskImage->draw(DrawableLine(x1, y1, x0, y0));
   //maskImage->write("test.png");
 
-  cout<<"BresenhamLine size is "<<bresenhamLine.size()<<endl;
+  *output<<"BresenhamLine size is "<<bresenhamLine.size()<<endl;
   /*	if (hits == 1) {
 
   // if the object is at the border then bresenhamLine should be empty; because we start saving the coordinate
   // when the line enters into the mask image
   if (bresenhamLine.size() > 0) {
   pair<int, int> temp = bresenhamLine[bresenhamLine.size()-1];
-  cout << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
+  *output << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
   ColorMono c = maskImage->pixelColor(temp.first, temp.second);
   //maleSP_x = prev_x;
   //maleSP_y = prev_y;
 
   if (c.mono() == true) {
-  cout << "start point from the source object should be black"<<endl;
+  *output << "start point from the source object should be black"<<endl;
   exit(0);
   }
   isFoundStartPoint = true;
@@ -2462,11 +2448,11 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   } 
   else {
   isFoundStartPoint = false;
-  cout<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
+  *output<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
   }
 
   } else {
-  cout << "Error: The brsenham line must intersect to the source object."<<endl;
+  *output << "Error: The brsenham line must intersect to the source object."<<endl;
   exit(0);
   }
   */
@@ -2474,13 +2460,13 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   // when the line enters into the mask image
   if (bresenhamLine.size() > 0) {
     pair<int, int> temp = bresenhamLine[bresenhamLine.size()-1];
-    cout << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
+    *output << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
     ColorMono c = maskImage->pixelColor(temp.first, temp.second);
     //maleSP_x = prev_x;
     //maleSP_y = prev_y;
 
     if (c.mono() == true) {
-      cout << "start point from the source object should be black"<<endl;
+      *output << "start point from the source object should be black"<<endl;
       exit(0);
     }
     isFoundStartPoint = true;
@@ -2489,7 +2475,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   } 
   else {
     isFoundStartPoint = false;
-    cout<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
+    *output<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
   }
 
 
@@ -2564,24 +2550,24 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 
     double dp = calculateDotProduct(femaleHeadDir, maleHeadDir);
 
-    cout<<"Dot product "<<fixed<<setprecision(8)<<dp<<endl;
+    *output<<"Dot product "<<fixed<<setprecision(8)<<dp<<endl;
 
     float rad = acos(static_cast<float>(dp));
-    cout<<"Angle in radian "<<rad<<endl;
+    *output<<"Angle in radian "<<rad<<endl;
 
     float deg = rad*180.0/static_cast<float>(PI);
-    cout<<"Angle in deg "<<deg<<endl;
+    *output<<"Angle in deg "<<deg<<endl;
 
     unsigned int a = static_cast<unsigned int>(roundT(static_cast<double>(deg)));
-    cout<<"Angle after rounding "<<a<<endl;
+    *output<<"Angle after rounding "<<a<<endl;
 
     headDirAngleMap[a]++;
 
     foutSt<<"Dot product was "<<dp<<endl;
     foutSt<<"Angle between ("<<maleHeadDir.first<<","<<maleHeadDir.second<<") and ("<<femaleHeadDir.first<<","<<femaleHeadDir.second<<") : "<<a<<endl;
     if(a == -2147483648 || a == 2147483648) {
-      cout<<"Angle between ("<<maleHeadDir.first<<","<<maleHeadDir.second<<") and ("<<femaleHeadDir.first<<","<<femaleHeadDir.second<<") : "<<a<<endl;
-      cout<<"Incorrect angle calculation :"<<a<<endl;
+      *output<<"Angle between ("<<maleHeadDir.first<<","<<maleHeadDir.second<<") and ("<<femaleHeadDir.first<<","<<femaleHeadDir.second<<") : "<<a<<endl;
+      *output<<"Incorrect angle calculation :"<<a<<endl;
       exit(1);
     }
     // 3. generate number of times male is looking at the female
@@ -2617,12 +2603,12 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
   } else if (singleBlob == true and unprocessed == false) {
     // 4. generate the number of times they are as single blob
     totalSingleBlob++;
-    cout << "Current frame is single blob\n";
+    *output << "Current frame is single blob\n";
     foutSt << "Frame is a single blob\n";
   } // singleBlob == false and unprocessed == true 
   else if (unprocessed == true) {
     totalUnprocessedFrame = totalUnprocessedFrame + 1;
-    cout <<"Current frame is unprocessed"<<endl; 
+    *output <<"Current frame is unprocessed"<<endl; 
     foutSt <<"Current frame is unprocessed"<<endl;
   } // else condition would never be generated singleBlob == true and unprocessed == true.
   // so it is not checked.
@@ -2632,7 +2618,7 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 
 void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob, bool unprocessed) {
 
-  cout << "isFirst is "<<isFirst<<endl;
+  *output << "isFirst is "<<isFirst<<endl;
   Image* img;
   string inputFileName;
   string outputFileName;
@@ -2643,7 +2629,7 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
   }
   vector<FlyObject > fOVector = currentFI.getFOVector();
 
-  cout << "While drawing it found objects = "<<fOVector.size()<<endl;
+  *output << "While drawing it found objects = "<<fOVector.size()<<endl;
 
   string maskFile = maskImagePath + fileName;
   Image* maskImage = new Image(maskFile.c_str());
@@ -2669,8 +2655,8 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     bool eVDirection = currentFO.getHeadIsInDirectionMAEV();
 
     // debug:
-    //cout<<"Calling the findTheStartPoint() function"<<endl;
-    //cout<<"Female size "<<femaleSize<<" maleSize "<<maleSize<<" MaleCentroid = "<<centroid.first<<", "<<centroid.second<<endl;
+    //*output<<"Calling the findTheStartPoint() function"<<endl;
+    //*output<<"Female size "<<femaleSize<<" maleSize "<<maleSize<<" MaleCentroid = "<<centroid.first<<", "<<centroid.second<<endl;
 
     // initialize the flag with false for the next found of findTheStartPoint()
     isFoundStartPoint = false;
@@ -2679,11 +2665,11 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     findTheStartPoint(fileName, maleSize, femaleSize, centroid.first, centroid.second, eVDirection);
     if (isFoundStartPoint == true) {
       isHitting = hitTheFly(maskImage, intersectX, intersectY);
-      cout<<"Male intersects the female at "<<intersectX<<","<<intersectY<<endl;
+      *output<<"Male intersects the female at "<<intersectX<<","<<intersectY<<endl;
       foutSt<<"Male intersects the female at "<<intersectX<<","<<intersectY<<endl;
     } else {
       isHitting = -1;
-      cout<<"Male head direction doesn't intersect with the female"<<endl;
+      *output<<"Male head direction doesn't intersect with the female"<<endl;
       foutSt<<"Male head direction doesn't interesect with the female"<<endl;
     }
 
@@ -2696,11 +2682,11 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     findTheStartPoint(fileName, femaleSize, maleSize, femaleCentroid.first, femaleCentroid.second, eVDirectionFemale);
     if ( isFoundStartPoint == true ) {
       isHittingFemaleToMale = hitTheFly(maskImage, intersectX, intersectY);
-      cout<<"Female intersects the male at "<<intersectX<<","<<intersectY<<endl;
+      *output<<"Female intersects the male at "<<intersectX<<","<<intersectY<<endl;
       foutSt<<"Female intersects the male at "<<intersectX<<","<<intersectY<<endl;
     } else {
       isHittingFemaleToMale = -1;
-      cout<<"Female head direction doesn't intersect with the male"<<endl;
+      *output<<"Female head direction doesn't intersect with the male"<<endl;
       foutSt<<"Female head direction doesn't intersect with the male"<<endl;
     }
 
@@ -2784,14 +2770,14 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
 
         //draw the object tracking circle
         if (n == isFirst and n==0) {
-          cout << "Tracking the n = "<<n<<endl;
+          *output << "Tracking the n = "<<n<<endl;
           img->strokeColor("yellow");
           img->draw(DrawableCircle(centroid.first, centroid.second, centroid.first+5, centroid.second));
           img->pixelColor(prev_x, prev_y, "red");
 
         } else if ( n == isFirst and n==1) {
 
-          cout << "Tracking the "<<n<<endl;
+          *output << "Tracking the "<<n<<endl;
           img->strokeColor("yellow");
           img->fillColor("none");
           img->pixelColor(prev_x, prev_y, "red");
@@ -2865,7 +2851,7 @@ void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool c
     obj.push_back(p);
 
     //		if (obj.size() > barrier) {
-    //			//cout<<obj.size()<<endl;
+    //			//*output<<obj.size()<<endl;
     //			barrier = barrier + 1000;
     //		}
     // setting the residual image at pixel(x,y) to white.
@@ -2910,7 +2896,7 @@ void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool 
     obj.push_back(p);
 
     //		if (obj.size() > barrier) {
-    //			//cout<<obj.size()<<endl;
+    //			//*output<<obj.size()<<endl;
     //			barrier = barrier + 1000;
     //		}
     // setting the residual image at pixel(x,y) to white.
@@ -3003,7 +2989,7 @@ vector<double> covariantDecomposition(vector<pair<int,int> > & points) {
   //	for (i=0; i<2; i++) {
   //		gsl_vector_view evec_i = gsl_matrix_column (eigenVec, i);
   //		//printf ("eigenvalue = %g\n", eval_i);
-  //		cout<<"eigenvector = \n";
+  //		*output<<"eigenvector = \n";
   //		gsl_vector_fprintf (stdout, &evec_i.vector, "%g");
   //	}
 
