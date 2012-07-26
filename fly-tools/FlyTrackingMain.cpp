@@ -1013,12 +1013,12 @@ void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob,
   //inputFile>>fileName;
   //inputFileName = "*output/identified/"+fileName;
   FrameInfo prevFI = fIVector[startIndex];
-  *output << "Extracting information for image "<< fnVector[startIndex] << endl;
+  cout << "Extracting information for image "<< fnVector[startIndex] << endl;
   *output<<prevFI;
   drawTheFlyObject(prevFI, fileName, isFirst, singleBlob, unprocessed);
   for (int i=startIndex+1; i<=endIndex; i++) {
     FrameInfo nextFI = fIVector[i];
-    *output << "Extracting information for image "<< fnVector[i] << endl;
+    cout << "Extracting information for image "<< fnVector[i] << endl;
     //FrameInfo na = &nextFI;
     *output<<nextFI;
     //inputFile>>fileName;
@@ -2004,7 +2004,7 @@ int main(int argc, char **argv)
     fnVector.push_back(fileName);
 
     fileName = maskImagePath + fileName;
-    *output << "Reading file "<<fileName<<endl;
+    cout << "Reading file "<<fileName<<endl;
     Image* img = new Image(fileName.c_str());
     int width = img->columns(),height = img->rows();
     diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
@@ -2299,7 +2299,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
 
   string segmImageFileName = maskImagePath + fileName;
 
-  *output << "Segmented image "<<segmImageFileName<<"\n";
+  cout << "Segmented image "<<segmImageFileName<<"\n";
   if (desiredSize == otherSize) {
     foutDebugCen<<"File name "<<segmImageFileName<<endl;
     foutDebugCen<<"MaleSize == FemaleSize\n";
