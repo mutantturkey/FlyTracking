@@ -15,6 +15,7 @@ int main(int argc, char* argv[]) {
 
   int c;
   int drawNumber = 2;
+
   double ratio;
 
   unsigned int result;
@@ -49,7 +50,7 @@ int main(int argc, char* argv[]) {
         break;
       case 'h':
         cout << usage << endl;
-        exit(1);
+        exit(0);
         break;
       default:
         break;
@@ -88,15 +89,10 @@ int main(int argc, char* argv[]) {
   }
 
   // if the ratio of the of the two blobs is smaller than the input ratio.
-  if( ((double)blobList[blobList.size()-2].second->area / (double)blobList[blobList.size()-1].second->area) < (1/ratio) ) {
+  if( ((double)blobList[blobList.size()-drawNumber].second->area / (double)blobList[blobList.size()-1].second->area) < (1/ratio) ) {
     cout << "the second largest blob is smaller than the ratio. only drawing largest blob!" << endl;
     drawNumber = 1; 
   }
-
-  cout << "blob area 1: " << (double)blobList[blobList.size()-2].second->area << endl;
-  cout << "blob area 2: " << (double)blobList[blobList.size()-1].second->area << endl;
-  cout << "blobs ratio:" <<  ((double)blobList[blobList.size()-2].second->area / (double)blobList[blobList.size()-1].second->area)<< endl; 
-  cout << "input ratio:" << (1/ratio ) << endl;
 
   for (int i=blobList.size()-drawNumber; i<blobList.size(); i++) {
     largeBlobs.insert( CvLabelBlob(blobList[i].first, blobList[i].second) );
