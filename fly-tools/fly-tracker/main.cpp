@@ -31,13 +31,6 @@ int main(int argc, char* argv[]) {
   bool setNumberSet;
   string setType;
 
-  CvBlobs blobs;
-  CvBlobs largeBlobs;
-
-  IplImage *inputImg;
-  IplImage *outputImg;
-  IplImage *labelImg;
-
   vector< pair<CvLabel, CvBlob*> > blobList;
 
   while ((c = getopt (argc, argv, "i:o:t:n:hv")) != -1)
@@ -85,10 +78,15 @@ int main(int argc, char* argv[]) {
   }
 
   string fileName;
-  int fileNumber;
+  long int fileNumber = 0;
+  long int totalFrames = 0;
+  long int togetherFrames = 0;
+
   bool togetherState = false;
 
   while (inputFile>>fileName) {
+
+    totalFrames += 1;
 
     IplImage *inputImg, *outputImg, *labelImg;
     inputImg = cvLoadImage(fileName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
@@ -106,15 +104,19 @@ int main(int argc, char* argv[]) {
     copy(blobs.begin(), blobs.end(), back_inserter(blobList));
     sort(blobList.begin(), blobList.end(), cmpArea);
 
-    (blobList.size() == 1) ? togetherState = true : togetherState = false;
+    if (blobList.size() == 1) {
+      togetherState = true;
+      togetherFrames += 1;
+    } else {  
+      togetherState = false;
+    }
 
     // List detected blob in each file
     *output << "File: " << fileName << endl;
     *output << "\t Together:" << togetherState << endl;
     for (int i=0; i<(int)blobList.size(); i++) {
-      *output << "\t Blob #" << blobList[i].first << " -> " << (*blobList[i].second) << endl;
+    *output << "\t Blob #" << blobList[i].first << " -> " << (*blobList[i].second) << endl;
     }
-
 
     // Release all the memory
     cvReleaseImage(&labelImg);
@@ -123,5 +125,9 @@ int main(int argc, char* argv[]) {
 
   }
 
+    cout << "Final Information" << endl;
+    cout << "\t Total Number of frames in video: " << totalFrames << endl; 
+    cout << "\t Number of frames where there flies are together: " << togetherFrames << endl; 
+    cout << "\t Percent of video where there flies are together: " << (long double)togetherFrames / totalFrames << endl; 
   return 0;
 }
