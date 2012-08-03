@@ -34,8 +34,8 @@ int main(int argc, char* argv[]) {
   CvBlobs blobs;
   CvBlobs largeBlobs;
 
-  IplImage *img;
-  IplImage *imgOut;
+  IplImage *inputImg;
+  IplImage *outputImg;
   IplImage *grey;
   IplImage *labelImg;
 
@@ -78,12 +78,12 @@ int main(int argc, char* argv[]) {
   *output << "Verbose logging enabled" << endl;
 
   // read input file
-  img = cvLoadImage(inputFileName.c_str(), 1);
+  inputImg = cvLoadImage(inputFileName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
 
-  imgOut = cvCreateImage(cvGetSize(img), IPL_DEPTH_8U, 1); cvZero(imgOut);
-  grey = cvCreateImage(cvGetSize(img), IPL_DEPTH_8U, 1);
+  outputImg = cvCreateImage(cvGetSize(inputImg), IPL_DEPTH_8U, 1); cvZero(outputImg);
+  grey = cvCreateImage(cvGetSize(inputImg), IPL_DEPTH_8U, 1);
 
-  cvCvtColor(img, grey, CV_BGR2GRAY);
+  cvCvtColor(inputImg, grey, CV_BGR2GRAY);
 
   // label blobs
   labelImg = cvCreateImage(cvGetSize(grey),IPL_DEPTH_LABEL,1);
@@ -96,7 +96,7 @@ int main(int argc, char* argv[]) {
   // if no blobs.
   if(blobList.size() == 0) { 
     cerr << "No blobs found" << endl;
-    cvSaveImage(outputFileName.c_str(), imgOut);
+    cvSaveImage(outputFileName.c_str(), outputImg);
     exit(1);
   } 
 
@@ -117,15 +117,15 @@ int main(int argc, char* argv[]) {
     *output << "Blob #" << blobList[i].first << " -> " << (*blobList[i].second) << endl;
   }
 
-  // draw the selected blobsto imgOut and write the image.
-  cvFilterLabels(labelImg, imgOut, largeBlobs);
-  cvSaveImage(outputFileName.c_str(), imgOut);
+  // draw the selected blobsto outputImg and write the image.
+  cvFilterLabels(labelImg, outputImg, largeBlobs);
+  cvSaveImage(outputFileName.c_str(), outputImg);
 
   // Release all the memory
-  cvReleaseImage(&imgOut);
+  cvReleaseImage(&outputImg);
   cvReleaseImage(&grey);
   cvReleaseImage(&labelImg);
-  cvReleaseImage(&img);
+  cvReleaseImage(&inputImg);
   cvReleaseBlobs(blobs);
 
   return 0;
