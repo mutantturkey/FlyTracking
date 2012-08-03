@@ -55,7 +55,7 @@ Basically the fly tracking process takes several steps to complete. All of these
 steps can be automated with the process-video-beta script available in the
 scripts directory.
 
-=== Step 1 ===
+### Step 1: Cropping Cells ###
 
 Since each video has several fly cells at one time, we need to crop each cell
 into it's own set. To do so, extract one frame of the video and then use gimp to
@@ -65,7 +65,7 @@ for this). You should write each cell into a file in this format:
   height:width:x:y
 
 You should save this in a file (make sure to name it properly. For the purpose
-of this explaination I am going to be working on video "Group1".
+of this explaination I am going to be working on video "Group1"
 
 Group1First10MinCropFile will look like this:
 
