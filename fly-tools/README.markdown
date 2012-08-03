@@ -17,7 +17,7 @@ FilterFlyMask runs some filtering operations on masks to ensure that the FlyTrac
 
 Usage:
 
-  FilterFlyMask -f <image-filename> -r <ratio> -m <mask-image> -o <outputFolderName>
+	FilterFlyMask -f <image-filename> -r <ratio> -m <mask-image> -o <outputFolderName>
 
 filter-mask
 -----------
@@ -26,7 +26,7 @@ filter-mask is an alternative fly filter that works much faster. It utilizes the
 
 Usage:
 
-  filter-mask -i <input-file> -o <output-file> -r <ratio>
+	filter-mask -i <input-file> -o <output-file> -r <ratio>
 
 mask-generator
 -------------
