@@ -11,7 +11,7 @@
 
 #include "thpool.h"
 
-#define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(-1); }
+#define ThrowWandException(wand)  {  char *description; ExceptionType severity; description=MagickGetException(wand,&severity);  (void) fprintf(stderr,"%s %s %lu %s\n",GetMagickModule(),description);  description=(char *) MagickRelinquishMemory(description);  exit(EXIT_FAILURE); }
 
 MagickWand *background;
 char *output_folder = NULL;
@@ -63,7 +63,7 @@ int main( int argc, char **argv){
         break;
       case 'h':
         puts(usage);
-        exit(1);
+        exit(EXIT_SUCCESS);
         break;
       default:
         break;
@@ -71,7 +71,7 @@ int main( int argc, char **argv){
 
   if( background_file == NULL || image_list == NULL || output_folder == NULL ) {
     puts(usage);
-    exit(1);
+    exit(EXIT_FAILURE);
   }
   MagickWandGenesis();
 
@@ -79,7 +79,7 @@ int main( int argc, char **argv){
 
   if(MagickReadImage(background, background_file) == MagickFalse) {
     puts("background could not load error");
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   thpool_t* threadpool;        
@@ -101,7 +101,7 @@ int main( int argc, char **argv){
     fclose ( f );
   }
   else {
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   puts("Will kill threadpool");
