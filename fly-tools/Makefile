@@ -1,7 +1,7 @@
 CPPC = g++
 CC = gcc
-CFLAGS= -O2 -Wall -s 
-CPPFLAGS= -O2 -Wall -s 
+CFLAGS= -O2 -Wall -s -Wextra
+CPPFLAGS= -O2 -Wall -s -Wextra 
 MAGICKCPPFLAGS = $(shell pkg-config --cflags --libs ImageMagick++ gsl)
 MAGICKCFLAGS = $(shell pkg-config --cflags --libs MagickWand )
 CVBLOBCPPFLAGS = $(shell pkg-config --cflags --libs opencv cvblob )
