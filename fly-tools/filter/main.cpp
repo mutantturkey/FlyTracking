@@ -36,7 +36,6 @@ int main(int argc, char* argv[]) {
 
   IplImage *inputImg;
   IplImage *outputImg;
-  IplImage *grey;
   IplImage *labelImg;
 
   vector< pair<CvLabel, CvBlob*> > blobList;
@@ -81,13 +80,10 @@ int main(int argc, char* argv[]) {
   inputImg = cvLoadImage(inputFileName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
 
   outputImg = cvCreateImage(cvGetSize(inputImg), IPL_DEPTH_8U, 1); cvZero(outputImg);
-  grey = cvCreateImage(cvGetSize(inputImg), IPL_DEPTH_8U, 1);
-
-  cvCvtColor(inputImg, grey, CV_BGR2GRAY);
 
   // label blobs
-  labelImg = cvCreateImage(cvGetSize(grey),IPL_DEPTH_LABEL,1);
-  cvLabel(grey, labelImg, blobs);
+  labelImg = cvCreateImage(cvGetSize(inputImg),IPL_DEPTH_LABEL,1);
+  cvLabel(inputImg, labelImg, blobs);
 
   // copy and sort blobs
   copy(blobs.begin(), blobs.end(), back_inserter(blobList));
@@ -123,7 +119,7 @@ int main(int argc, char* argv[]) {
 
   // Release all the memory
   cvReleaseImage(&outputImg);
-  cvReleaseImage(&grey);
+  cvReleaseImage(&inputImg);
   cvReleaseImage(&labelImg);
   cvReleaseImage(&inputImg);
   cvReleaseBlobs(blobs);
