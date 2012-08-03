@@ -19,6 +19,15 @@ Usage:
 
 	 FilterFlyMask -f <image filename> -r <ratio> -m <mask image> -o <outputFolderName>
 
+filter-mask
+-----------
+
+filter-mask is an alternative fly filter that works much faster. It utilizes the OpenCV and CvBlob libraries.
+
+Usage:
+
+  filter-mask -i <input> -o <output> -r <ratio>
+
 mask-generator
 -------------
 
@@ -39,4 +48,4 @@ This tool will generate a common background image of a set of video frames (PNGs
 
 Usage:
 
-  derive-background -i <input-list> -s <sample-file> -o <output-filename> 
+  derive-background -i <input-list> -o <output-filename> 
