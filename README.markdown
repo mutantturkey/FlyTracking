@@ -58,7 +58,7 @@ scripts directory.
 1. Cropping and Extracting Cell Images
 2. Deriving Cell Backgrounds
 3. Generating Cell Masks
-4. Filtering Masks
+4. Filtering Cell Masks
 5. Fly Tracking
 
 ### Step 1: Cropping and Extracting Cell Images ###
@@ -92,4 +92,42 @@ to run the first out of five steps.
 This will take some time, and require a lot of CPU and disk space.
 
 ### Step 2: Deriving Cell Backgrounds ###
+
+The second step of the process is deriving the background image from the video.
+By doing this, we can subtract the background from the current frame to generate
+the mask. When subtracted the parts left over are the fly, while things in the
+background won't show up.
+
+	process-video-beta -v First10MinGroup1.avi -l Group1First10MinCropFile -n 1 -t First10MinSet -d data/ -2
+
+This will derive the backgrounds for all of the Cells in the video seperately.
+After this tool is done running, it will output the Background.png into the mask
+folder. $data-root/$settype$setnumber/Background.png, for example it might be in
+data/First10MinSet2/Background.png.
+
+Verify this image. Sometimes when the flies do not move the background might
+include the fly! If there are any left of flie parts, use GIMP to airbrush over
+that section with an appropriate color (guess what the background would be
+"close" too).
+
+### Step 3: Generating Cell Masks ###
+
+The third step of the process is generating the Masks from the background and
+the cropped images.
+
+	process-video-beta -v First10MinGroup1.avi -l Group1First10MinCropFile -n 1 -t First10MinSet -d data/ -3
+
+This step will output the masks in $data-root/$settype$setnumber/Masks/
+
+### Step 4: Filtering Cell Masks ###
+
+The fourth step is the filtering step. It's important because it makes sure the
+masks do not have stray objects in them (which will mess up the final tracking
+sequence) 
+
+
+	process-video-beta -v First10MinGroup1.avi -l Group1First10MinCropFile -n 1 -t First10MinSet -d data/ -4
+
+The filtered masks are in $data-root/$settype$setnumber/Filtered/final/
+
 
