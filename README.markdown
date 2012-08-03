@@ -55,7 +55,13 @@ Basically the fly tracking process takes several steps to complete. All of these
 steps can be automated with the process-video-beta script available in the
 scripts directory.
 
-### Step 1: Cropping Cells ###
+1. Cropping and Extracting Cell Images
+2. Deriving Cell Backgrounds
+3. Generating Cell Masks
+4. Filtering Masks
+5. Fly Tracking
+
+### Step 1: Cropping and Extracting Cell Images ###
 
 Since each video has several fly cells at one time, we need to crop each cell
 into it's own set. To do so, extract one frame of the video and then use gimp to
