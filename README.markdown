@@ -79,4 +79,17 @@ Group1First10MinCropFile will look like this:
 	181:173:195:120
 	179:170:370:114
 
+After you have completed that, you will want to run the extraction step of the
+process-video-beta script. To get a more detailed look at the arguments accepted
+by the processing script, run it with the -h flag.
+
+	process-video-beta -v First10MinGroup1.avi -l Group1First10MinCropFile -n 1 -t First10MinSet -d data/ -1
+
+The -d flag indicates the folder you want to extract these files to, and will be
+used as the directory structure for the rest of the steps. The -1 flag tells it
+to run the first out of five steps.
+
+This will take some time, and require a lot of CPU and disk space.
+
+### Step 2: Deriving Cell Backgrounds ###
 
