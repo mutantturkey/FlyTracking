@@ -130,4 +130,25 @@ sequence)
 
 The filtered masks are in $data-root/$settype$setnumber/Filtered/final/
 
+### Step 5: Fly Tracking ###
+
+This is the final step of the image processing. It will generate results in the
+$data-root/$settype$setnumber/Final/. There will be PNGs showing the tracking
+results (refer to the paper to see what the polygons and lines refer too), a few
+files that indicate the standard deviation and mean of certain fly behaviors,
+and a "stat" file, which contains debug and statistical information as well.
+
+This process willl take a long time beceause it iterates through each images in a
+set (about 18,000 images).
+
+	process-video-beta -v First10MinGroup1.avi -l Group1First10MinCropFile -n 1 -t First10MinSet -d data/ -4
+
+After this is done running you should review the pngs to make sure that the fly
+tracking was performed correctlyAfter this is done running you should review the
+pngs to make sure that the fly tracking was performed correctly. 
+
+### Into the Beyond ###
+
+Now that we've done the hard work of image processing the rest is up to you! The
+data is all there, now you need to do manually generate the feature vectors.
 
