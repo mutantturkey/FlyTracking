@@ -62,15 +62,15 @@ into it's own set. To do so, extract one frame of the video and then use gimp to
 determine the x, y, height and width of each cell (the select tool is very handy
 for this). You should write each cell into a file in this format: 
 
-  height:width:x:y
+	height:width:x:y
 
 You should save this in a file (make sure to name it properly. For the purpose
 of this explaination I am going to be working on video "Group1"
 
 Group1First10MinCropFile will look like this:
 
-  180:172:119:116
-  181:173:195:120
-  179:170:370:114
+	180:172:119:116
+	181:173:195:120
+	179:170:370:114
 
 
