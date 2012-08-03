@@ -1918,12 +1918,7 @@ int main(int argc, char **argv)
         break;
     }
 
-
-  if(verbose) {
-    output = &cout;
-  }	else {
-    output = &nullLog; 
-  }
+  (verbose) ? output = &cout : output = &nullLog; 
 
   *output << "verbose logging out" << endl;
 
