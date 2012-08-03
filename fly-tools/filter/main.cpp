@@ -19,8 +19,11 @@ bool cmpArea(const pair<CvLabel, CvBlob*>  &p1, const pair<CvLabel, CvBlob*> &p2
 int main(int argc, char* argv[]) {
 
   int c;
+
+  // drawNumber refers to the number of blobs to draw, it will be either 1 or 2.
   int drawNumber = 2;
 
+  // ratio of the largest blob to the smallest blob.
   double ratio = 0;
 
   bool verbose = false;
@@ -57,7 +60,7 @@ int main(int argc, char* argv[]) {
         break;
       case 'h':
         cout << usage << endl;
-        exit(0);
+        exit(EXIT_SUCCESS);
         break;
       default:
         break;
@@ -65,7 +68,7 @@ int main(int argc, char* argv[]) {
 
   if ( inputFileName.empty() || outputFileName.empty() || !ratioSet ) {
     cerr << usage << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }	
 
   if(verbose) {
@@ -93,7 +96,7 @@ int main(int argc, char* argv[]) {
   if(blobList.size() == 0) { 
     cerr << "No blobs found" << endl;
     cvSaveImage(outputFileName.c_str(), outputImg);
-    exit(1);
+    exit(EXIT_FAILURE);
   } 
 
   // if only one blob is detected.
