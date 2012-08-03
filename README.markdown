@@ -24,8 +24,8 @@ easy to do. If you have trouble building, please make sure that you have gsl
 and ImageMagick++, MagickWand, OpenCV and CvBlob libraries and headers
 installed.  
 
-  $ cd fly-data
-  $ make
+    $ cd fly-data
+    $ make
 
 The programs that will be built are located here:
 
