@@ -92,10 +92,11 @@ int main(int argc, char **argv ) {
   int height =  MagickGetImageHeight(first_wand);
   int width =   MagickGetImageWidth(first_wand);
 
-  if (height == 0 | width == 0) {
+  if (height == 0 || width == 0) {
     puts("height/or width is 0!");
     exit(1);
   }
+
   first_wand =  DestroyMagickWand(first_wand);
 
   printf("height: %d width:%d \n", height, width);
@@ -212,5 +213,6 @@ int main(int argc, char **argv ) {
   DestroyMagickWand(output_wand);
 
   MagickWandTerminus();
+
   return 0;
 }
