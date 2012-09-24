@@ -467,7 +467,7 @@ if (inWhite)
 // if the line started as a white pixel then discard the line fragment
 if (startedWhite == false) {
 int val = roundT(dist(x_init, y_init, x, y));
-//*output<<" val is = " << val << " at (x0,y0) = " << x_init << "," << y_init << " to (x1,y1) = " << x << "," << y <<endl;
+// *output<<" val is = " << val << " at (x0,y0) = " << x_init << "," << y_init << " to (x1,y1) = " << x << "," << y <<endl;
 len[val]++;
 } else
 startedWhite = false;
@@ -1682,7 +1682,6 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
 
   int s;
   int e;
-  int fs,fe;
   foutLPS<<"------------------------------------------------------------------"<<endl;
   largestIncreasingPositiveDotProductSeq(evDirectionF, s, e);
   *output << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
@@ -2082,16 +2081,8 @@ int main(int argc, char **argv)
 
     FrameInfo tempFI(frameCounter, fOVector, currentFrameIsSingleBlob);
     fIVector.push_back(tempFI);
-    bool flag;
     FrameInfo currentFI = fIVector[fileCounter];
 
-    /******** single image test *******/
-    // debuging a single drawTheFlyObject
-    //drawTheFlyObject(nextFI, fileName,  isFirst, singleBlob, unprocessed);
-    //drawTheFlyObject(currentFI, fileNameForSave, 1, false, false);
-
-    //open this after debug
-    /**/
     // start processing the sequence if applicable
     if (sequenceSize > 1) {
 
@@ -2203,24 +2194,12 @@ int main(int argc, char **argv)
 
 
   string cDDistFileName = finalOutputPath + outputFilePrefix + "_centroidDist.txt";
-
   string hDAngleDistFileName = finalOutputPath + outputFilePrefix + "_headDist.txt";
-
   string speedDistFileName = finalOutputPath + outputFilePrefix + "_speedDist.txt";
 
   writeHist(cDDistFileName.c_str(), centroidDistanceMap);
-
   writeHist(hDAngleDistFileName.c_str(), headDirAngleMap);
-
   writeHist(speedDistFileName.c_str(), speedMap);
-
-
-  //double percentageLookingAt = static_cast<double>(totalMaleLookingAtFemale)/static_cast<double> (fileCounter-totalUnprocessedFrame);
-  //percentageLookingAt *= 100.0;
-
-  //double percentageSingleBlob = static_cast<double>(totalSingleBlob)/static_cast<double>(fileCounter);
-  //percentageSingleBlob *= 100.0;
-
 
   // new calculation of percentage look at should consider only those frames where the flies are separated
   double percentageLookingAt = static_cast<double>(totalMaleLookingAtFemale+totalFemaleLookingAtMale)/static_cast<double>(totalSeparated);
@@ -2240,19 +2219,15 @@ int main(int argc, char **argv)
   foutSt<<"Percentage of frame in looking at mode "<<percentageLookingAt<<endl;
   foutSt<<"Percentage of frame single blob "<<percentageSingleBlob<<endl;
 
-  //open this after debug
-  /**/
-
   foutSt.close();
-
   foutDebugCen.close();
-
   foutLPS.close();
-
   foutDebugSpeed.close();
 
   return 0;
 }
+
+
 // is set each time the start is found
 // useful when one blob is detected on the border of the mask image
 bool isFoundStartPoint = false;
@@ -2414,7 +2389,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
     maskImage->pixelColor(point.first, point.second,"white");
   }
 
-  int hits = draw_line_bm(maskImage, x1, y1, x0, y0);
+  /*int hits= */ draw_line_bm(maskImage, x1, y1, x0, y0);
 
 
   //maskImage->strokeColor("red");
@@ -2475,12 +2450,10 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
 
 
   delete residual;
-
   delete image;
-
   delete maskImage;
-
 }
+
 
 void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob, bool isHitting, bool isHittingFemaleToMale, bool unprocessed) {
 
@@ -2494,15 +2467,12 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
     FlyObject femaleFO = fOVector[1-isFirst]; 
 
     pair<int, int> maleCentroid = maleFO.getCentroid();
-
-    pair<double, double> maleMajorAxisEV = maleFO.getMajorAxisEV();
-
-    bool maleEVDir = maleFO.getHeadIsInDirectionMAEV();
-
     pair<int, int> femaleCentroid = femaleFO.getCentroid();
 
+    pair<double, double> maleMajorAxisEV = maleFO.getMajorAxisEV();
     pair<double, double > femaleMajorAxisEV = femaleFO.getMajorAxisEV();
 
+    bool maleEVDir = maleFO.getHeadIsInDirectionMAEV();
     bool femaleEVDir = femaleFO.getHeadIsInDirectionMAEV();
 
 
