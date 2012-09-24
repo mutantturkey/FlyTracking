@@ -636,9 +636,7 @@ int maskImageHeight;
 int maskImageWidth;
 vector<pair<int,int> > bresenhamLine;
 
-
-void putPixel(Image* maskImage, int x, int y, int color) {
-
+void putPixel(Image* maskImage, int x, int y) {
 
   // ignore the pixels outside of the image boundary
   // if outside maximum y
@@ -717,7 +715,8 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x, y, 1);
+      putPixel(maskImage,x, y);
+
       if (isInFemaleBlob == true)
         return 1;
 
@@ -733,7 +732,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           y = y + 1;
         }
 
-        putPixel(maskImage,x, y, 1);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
 
@@ -748,7 +747,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x, y, 2);
+      putPixel(maskImage,x, y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -765,7 +764,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
         }
 
-        putPixel(maskImage,x, y, 2);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
       }
@@ -779,7 +778,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x, y, 3);
+      putPixel(maskImage,x, y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -796,7 +795,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           x = x - 1;
         }
 
-        putPixel(maskImage,x, y, 3);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
       }
@@ -811,7 +810,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x, y, 4);
+      putPixel(maskImage,x, y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -828,7 +827,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           y = y + 1;
         }
 
-        putPixel(maskImage,x, y, 4);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
       }
@@ -843,7 +842,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x, y, 5);
+      putPixel(maskImage,x, y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -860,7 +859,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           y = y - 1;
         }
 
-        putPixel(maskImage,x, y, 5);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
       }
@@ -876,7 +875,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x,y,6);
+      putPixel(maskImage,x,y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -893,7 +892,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           x = x -1;
         }
 
-        putPixel(maskImage,x, y, 6);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
 
@@ -910,7 +909,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x,y,7);
+      putPixel(maskImage,x,y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -926,7 +925,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
           x = x + 1;
         }
 
-        putPixel(maskImage,x, y, 7);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
 
@@ -943,7 +942,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
       x = x0;
       y = y0;
 
-      putPixel(maskImage,x,y,8);
+      putPixel(maskImage,x,y);
       if (isInFemaleBlob == true)
         return 1;
 
@@ -961,7 +960,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
         }
 
        // *output << "putpixel "<<x<<","<<y<<endl;
-        putPixel(maskImage,x, y, 8);
+        putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
       }
