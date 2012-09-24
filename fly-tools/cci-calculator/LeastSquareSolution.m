@@ -27,17 +27,11 @@ function [x, e] = LeastSquareSolution(fileNameA, fileNameB, output)
         debug_file = strcat(debug_file, file_id_number); 
         debug_file = strcat(debug_file, '.txt');
         
-    
-       
-
-       
         if (i == (total_folds-1))
             elements_per_fold = fold_size + remainder_of_total_folds
         end
         %select one sample at a time for testing using the rest for training
-
         %if the value is set to 1, that is the sample that will be used for
-
         %training/testing
 
         train = ones(length(b),1); %create a column vector of ones
@@ -115,7 +109,6 @@ function [x, e] = LeastSquareSolution(fileNameA, fileNameB, output)
         fclose(fid_debug);
 
         dlmwrite(debug_file, A_, 'delimiter', '\t', '-append');
-        
         dlmwrite(debug_file, test_data, 'delimiter', '\t', '-append');
 
    
