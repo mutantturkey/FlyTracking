@@ -1,7 +1,6 @@
 /*
  *  FrameInfo.cpp
  *  
- *
  *  Created by Md. Alimoor Reza on 6/26/10.
  *  Copyright 2010 Drexel University. All rights reserved.
  *

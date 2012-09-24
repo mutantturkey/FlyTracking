@@ -62,6 +62,7 @@ vector<string> fnVector;
 string inputFileName;
 
 bool writeFinalImages = false;
+
 // GLOBAL PATHS
 string maskImagePath;
 string origImagePath;
@@ -90,7 +91,6 @@ map<unsigned int, unsigned int> centroidDistanceMap;
 map<unsigned int, unsigned int> headDirAngleMap;
 map<unsigned int, unsigned int> speedMap;
 
-int barrier = 1000;
 
 void initSequence(){
   startOfATrackSequence = -1;
@@ -2815,10 +2815,6 @@ void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool c
     p.second = y;
     obj.push_back(p);
 
-    //		if (obj.size() > barrier) {
-    //			//*output<<obj.size()<<endl;
-    //			barrier = barrier + 1000;
-    //		}
     // setting the residual image at pixel(x,y) to white.
     residual->pixelColor(x,y, ColorMono(true));
 
@@ -2860,10 +2856,6 @@ void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool 
     p.second = y;
     obj.push_back(p);
 
-    //		if (obj.size() > barrier) {
-    //			//*output<<obj.size()<<endl;
-    //			barrier = barrier + 1000;
-    //		}
     // setting the residual image at pixel(x,y) to white.
     residual->pixelColor(x,y, ColorMono(true));
 

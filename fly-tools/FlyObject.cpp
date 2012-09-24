@@ -10,7 +10,6 @@
 #include "FlyObject.h"
 
 FlyObject::FlyObject(int area, pair<int, int> centroid, pair<double,double> majorAxisEV, pair<double,double> velocityV,bool headIsInDirectionMAEV, pair<double,double> head, double speed) {
-//FlyObject::FlyObject(int area, pair<int, int> centroid, pair<double,double> majorAxisEV, pair<double,double> velocityV, vector<pair<int , int> > areaCoord) {
 	this->area = area;
 	this->centroid = centroid;
 	this->majorAxisEV = majorAxisEV;
@@ -18,7 +17,6 @@ FlyObject::FlyObject(int area, pair<int, int> centroid, pair<double,double> majo
 	this->headIsInDirectionMAEV = headIsInDirectionMAEV;
 	this->head = head;
 	this->speed = speed;
-//	this->areaCoord = areaCoord;
 }
 
 FlyObject::FlyObject(const FlyObject &f){
@@ -26,7 +24,6 @@ FlyObject::FlyObject(const FlyObject &f){
 	this->centroid=f.getCentroid();
 	this->majorAxisEV =f.getMajorAxisEV();
 	this->velocityV = f.getVelocityV();
-//	this->areaCoord = f.getAreaCoord();
 	this->headIsInDirectionMAEV = f.getHeadIsInDirectionMAEV();
 	this->head = f.getHead();
 	this->speed = f.getSpeed();
@@ -53,9 +50,6 @@ bool FlyObject::getHeadIsInDirectionMAEV() const {
 pair<double,double> FlyObject::getHead() const {
 	return this->head;
 }
-//vector<pair<int , int> > FlyObject::getAreaCoord() const {
-//	return this->areaCoord;
-//}
 double FlyObject::getSpeed() const {
 	return this->speed;
 }
@@ -73,16 +67,12 @@ void FlyObject::setMajorAxisEV(pair<double,double> majorAxisEV) {
 
 void FlyObject::setVelocityV(pair<double,double> velocityV) {
 	this->velocityV = velocityV;
-//	cout << "velocityV is set to "<<this->velocityV.first<<","<<this->velocityV.second<<endl;
 }
 void FlyObject::setHead(pair<double, double> head) {
 	this->head = head;
 	cout << "new head is set"<<endl;
 
 }
-//void FlyObject::setAreaCoord(vector<pair<int, int> > areaCoord){
-//	this->areaCoord = areaCoord;
-//}
 void FlyObject::setSpeed(double speed) {
 	this->speed = speed;
 }
