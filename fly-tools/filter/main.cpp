@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
   (verbose) ? output = &cout : output = &nullLog; 
 
-  *output << "Verbose logging enabled" << endl;
+  *output << "Filtering: " << inputFileName <<  endl;
 
   // read input file
   inputImg = cvLoadImage(inputFileName.c_str(), CV_LOAD_IMAGE_GRAYSCALE);
@@ -89,7 +89,7 @@ int main(int argc, char* argv[]) {
   sort(blobList.begin(), blobList.end(), cmpArea);
 
   // if no blobs.
-  if(blobList.size() == 0) { 
+  if(blobList.empty()) { 
     cerr << "No blobs found" << endl;
     cvSaveImage(outputFileName.c_str(), outputImg);
     exit(EXIT_FAILURE);
@@ -112,15 +112,15 @@ int main(int argc, char* argv[]) {
     *output << "Blob #" << blobList[i].first << " -> " << (*blobList[i].second) << endl;
   }
 
-  // draw the selected blobsto outputImg and write the image.
+  // draw the selected blobs to outputImg and write the image.
   cvFilterLabels(labelImg, outputImg, largeBlobs);
+  *output << "Outputting Filtered Mask to: " << outputFileName << endl;
   cvSaveImage(outputFileName.c_str(), outputImg);
 
   // Release all the memory
   cvReleaseImage(&outputImg);
   cvReleaseImage(&inputImg);
   cvReleaseImage(&labelImg);
-  cvReleaseImage(&inputImg);
   cvReleaseBlobs(blobs);
 
   return 0;
