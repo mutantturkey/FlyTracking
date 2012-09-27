@@ -12,7 +12,7 @@ int nImages;
 unsigned long height = 0;
 unsigned long width = 0;
 
-int findmax (uint8_t *p, int n) {
+int findmax(long *p, int n) {
   int mx = 0, v = p[0];
   for (int i = 1; i < n; i++) {
     if (p[i] > v) {
@@ -54,13 +54,13 @@ int main(int argc, char **argv ) {
     exit(EXIT_FAILURE);
   }
 
-  IplImage *first_image, *input_image, *output_image;
+  IplImage *first_image = NULL;
+  IplImage *output_image = NULL;
 
   int i,j, k;
   int image = 0;
 
   string filename;
-
 
 
   // open first image in input_file to deterimine the height and width
@@ -104,7 +104,7 @@ int main(int argc, char **argv ) {
   cout << "number of images: " << nImages << endl;
 
   // initialize the storage arrays
-  uint8_t * array = (uint8_t *)malloc(nImages*height*width*3*sizeof(uint8_t));
+  long * array = (long *)malloc(height*width*256*3*sizeof(long));
   if(array == NULL) {
     cerr << "could not allocate the proper memory, sorry!" << endl;
     exit(EXIT_FAILURE);
@@ -115,22 +115,27 @@ int main(int argc, char **argv ) {
 
   while (input_file>>filename) {
 
+    IplImage *input_image = NULL;
     input_image = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_UNCHANGED);
 
     cout << "Image number " << image << "Filename " << filename << endl;
 
     for (j=0; j<width; j++) {
       for (i=0; i<height; i++) {
+
         CvScalar s;
         s = cvGet2D(input_image, i, j);
 
-                array(image,i,j,0) = s.val[2];
-                array(image,i,j,1) = s.val[1];
-                array(image,i,j,2) = s.val[0]; 
+        int r = s.val[2];
+        int g = s.val[1];
+        int b = s.val[0];
+
+        array(r,i,j,0) += 1;
+        array(g,i,j,1) += 1;
+        array(b,i,j,2) += 1; 
       }
     }
-    // TODO: free image
-    image++;
+    cvReleaseImage(&input_image);
   }
 
   // calculate histograms
@@ -141,14 +146,16 @@ int main(int argc, char **argv ) {
 
       CvScalar s;
 
-      uint8_t red_histogram[255] = { 0 };
-      uint8_t blue_histogram[255] = { 0 };
-      uint8_t green_histogram[255] = { 0 };
 
-      for (i = 0; i < nImages; i++) {
-        red_histogram[array(i,j,k,0)] += 1;
-        blue_histogram[array(i,j,k,1)] += 1;
-        green_histogram[array(i,j,k,2)] += 1;
+
+      long red_histogram[255] = { 0 };
+      long blue_histogram[255] = { 0 };
+      long green_histogram[255] = { 0 };
+
+      for (i = 0; i < 256; i++) {
+        red_histogram[i] += array(i,j,k,0);
+        green_histogram[i] += array(i,j,k,1);
+        blue_histogram[i] += array(i,j,k,2);
       }
 
       int red_val = findmax(red_histogram, 255);
