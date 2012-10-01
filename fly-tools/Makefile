@@ -1,17 +1,17 @@
 CPPC = g++
 CC = gcc
-CFLAGS= -O2 -Wall -s -Wextra
-CPPFLAGS= -O2 -Wall -s -Wextra 
+CFLAGS= -O2 -Wall -s -Wextra -mtune=native
+CPPFLAGS= -O2 -Wall -s -Wextra -mtune=native
 MAGICKCPPFLAGS = $(shell pkg-config --cflags --libs ImageMagick++ gsl)
 MAGICKCFLAGS = $(shell pkg-config --cflags --libs MagickWand )
 CVBLOBCPPFLAGS = $(shell pkg-config --cflags --libs opencv cvblob )
-
+CVCPPFLAGS = $(shell pkg-config --cflags --libs opencv)
 all: FilterFlyMask FlyTrackingMain mask-generator derive-background standard-deviation filter-mask
 
 derive-background:
-	$(CC) background/main.c -std=c99 -o derive-background $(CFLAGS) $(MAGICKCFLAGS)
+	$(CC) background/main.cpp -o derive-background $(CPPFLAGS) $(CVCPPFLAGS)
 filter-mask:
-	$(CPPC) filter/main.cpp -o filter-mask $(CPPFLAGS) $(CVBLOBCPPFLAGS)
+	$(CPPC) filter/main.cpp -o filter-mask $(CPPFLAGS) $(CVBLOBCPPFLAGS) $(CVCPPFLAGS)
 mask-generator:
 	$(CC) mask/main.c mask/thpool.c -I./mask/ -o mask-generator $(CFLAGS) $(MAGICKCFLAGS) -pthread
 standard-deviation:
