@@ -38,10 +38,12 @@ vector<FrameInfo > fIForHeadVector;
 // since for the first time the head is automatically need to be set
 int startIndexToFindNewHead=0;
 int endIndexToFindNewHead;
+
 double initLargeLocationX=-1;
 double initLargeLocationY=-1;
 double initSmallLocationX=-1;
 double initSmallLocationY=-1;
+
 pair<double, double> largeCollisionBeforeDirection;
 pair<double, double> smallCollisionBeforeDirection;
 
@@ -144,24 +146,21 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
 
   unsigned int first = front->first, last = back->first;
   *output << "Min: " << first << " " << "Max: " << last << " " << "Count: " << last-first << endl;
-  //vector<unsigned int> hist(last-first, 0);
   vector<unsigned int> hist(last+1, 0);
 
-//  *output << "hist size: " << hist.size() << endl;
-  try{
-    for(unsigned int j = 0; j<first; j++) {
+  try {
+    for (unsigned int j = 0; j<first; j++) {
       hist[j] = 0;
     }
-    for (unsigned int j = first; j<=last; j++)
-    {
+    for (unsigned int j = first; j<=last; j++) {
       hist[j] = dataMap[j];
     }
   }
-  catch (...)
-  { cerr << "Bad histogram bucketing" << endl; }
+  catch (...) {
+    cerr << "Bad histogram bucketing" << endl;
+  }
 
-  try
-  {
+  try {
     ofstream fout(filename);
     for (unsigned int i = 0; i<hist.size(); i++) {
       fout << hist[i] << endl;
@@ -169,8 +168,10 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
     fout << first << " " << last << " " << hist.size() << endl;
     fout.close();
   }
-  catch (...)
-  { cerr << "Bad memory loc for opening file" << endl; }
+  catch (...) {
+    cerr << "Bad memory loc for opening file" << endl;
+  }
+
 }
 
 void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon=true, bool colorLookingFor=true);
@@ -735,7 +736,6 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
         putPixel(maskImage,x, y);
         if (isInFemaleBlob == true)
           return 1;
-
       }
       break;
 
@@ -1001,32 +1001,24 @@ int sequenceCondition(FrameInfo prevFI,FrameInfo currentFI) {
 void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob, bool unprocessed) {
 
   *output << "Should draw "<<isFirst<<endl;
-  //ifstream inputFile;
-  //inputFile.open(inputFileName.c_str());
-  /*if (inputFile.fail() ) {
-    *output << "cannot open the input file that contains name of the input images\n";
-    exit(1);
-    }*/
 
   string fileName = fnVector[startIndex];
-  //inputFile>>fileName;
-  //inputFileName = "*output/identified/"+fileName;
   FrameInfo prevFI = fIVector[startIndex];
-  cout << "Extracting information for image "<< fnVector[startIndex] << endl;
+
+  *output << "Extracting information for image "<< fnVector[startIndex] << endl;
+
   *output<<prevFI;
+
   drawTheFlyObject(prevFI, fileName, isFirst, singleBlob, unprocessed);
+
   for (int i=startIndex+1; i<=endIndex; i++) {
     FrameInfo nextFI = fIVector[i];
     cout << "Extracting information for image "<< fnVector[i] << endl;
-    //FrameInfo na = &nextFI;
     *output<<nextFI;
-    //inputFile>>fileName;
     fileName = fnVector[i];
-    //	inputFileName = "*output/identified/"+fileName;
     drawTheFlyObject(nextFI, fileName,  isFirst, singleBlob, unprocessed);
   }
 
-  //inputFile.close();
 }
 
 
@@ -1252,12 +1244,6 @@ void velocityDirections(int stIndex, int endIndex) {
   *output << "Initial velocity direction calculation"<<endl;
   *output << "From index "<<stIndex<<" to "<<endIndex<<endl;
   *output << "From "<<fnVector[stIndex]<<" to "<<fnVector[endIndex]<<endl;
-
-  /*overAllVelocityF.first = 0;
-    overAllVelocityF.second = 0;
-    overAllVelocityS.first = 0;
-    overAllVelocityS.second = 0;
-    */
 
   for (i=stIndex; i<endIndex; i=i++) {
 
