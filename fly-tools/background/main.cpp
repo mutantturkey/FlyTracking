@@ -54,14 +54,16 @@ int main(int argc, char **argv ) {
     exit(EXIT_FAILURE);
   }
 
+  // Okay Declare all our working variables here.
+
   IplImage *first_image = NULL;
   IplImage *output_image = NULL;
 
   int i,j, k;
-  int image = 0;
+  int height = 0;
+  int width = 0;
 
   string filename;
-
 
   // open first image in input_file to deterimine the height and width
   ifstream input_file(inputFileName.c_str());
@@ -74,18 +76,18 @@ int main(int argc, char **argv ) {
 
   // Read first line for our first image and rewind
   input_file>>filename; 
-  //  input_file.seekg (0, ios::beg);
 
-  cout << filename << endl;
   first_image = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_UNCHANGED);
 
   if(!first_image) {
     cerr << "couldn't read first image" << endl;
     exit(1);
   } 
-  // Get our height and width 
-  int height = first_image->height;
-  int width = first_image->width;
+
+  height = first_image->height;
+  width = first_image->width;
+
+  cvReleaseImage(&first_image);
 
   if (height == 0 || width == 0) {
     cerr << "height or width = 0!" << endl;
@@ -95,6 +97,7 @@ int main(int argc, char **argv ) {
   cout << "height: " << height << " width: " << width << endl;
 
   // count number of images we have in the file
+
   input_file.clear();
   input_file.seekg(0);
   while(input_file>>filename) {
@@ -104,7 +107,7 @@ int main(int argc, char **argv ) {
   cout << "number of images: " << nImages << endl;
 
   // initialize the storage arrays
-  long * array = (long *)malloc(height*width*256*3*sizeof(long));
+  long *array = (long *)malloc(height*width*256*3*sizeof(long));
   if(array == NULL) {
     cerr << "could not allocate the proper memory, sorry!" << endl;
     exit(EXIT_FAILURE);
@@ -118,11 +121,10 @@ int main(int argc, char **argv ) {
     IplImage *input_image = NULL;
     input_image = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_UNCHANGED);
 
-    cout << "Image number " << image << "Filename " << filename << endl;
+    cout << "reading: " << filename << endl;
 
-    for (j=0; j<width; j++) {
-      for (i=0; i<height; i++) {
-
+    for (i=0; i<height; i++) {
+      for (j=0; j<width; j++) {
         CvScalar s;
         s = cvGet2D(input_image, i, j);
 
@@ -146,8 +148,6 @@ int main(int argc, char **argv ) {
 
       CvScalar s;
 
-
-
       long red_histogram[255] = { 0 };
       long blue_histogram[255] = { 0 };
       long green_histogram[255] = { 0 };
@@ -169,7 +169,6 @@ int main(int argc, char **argv ) {
       cvSet2D(output_image, j, k, s);
     }
   }
-
 
   if(!cvSaveImage(output_file.c_str(), output_image)) {
     cerr << "Could not save "<< output_file << endl;
