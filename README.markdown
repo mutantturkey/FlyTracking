@@ -150,5 +150,11 @@ pngs to make sure that the fly tracking was performed correctly.
 ### Into the Beyond ###
 
 Now that we've done the hard work of image processing the rest is up to you! The
-data is all there, now you need to do manually generate the feature vectors.
+data is all there, now you need to do manually generate the feature vectors, and
+you need to run our simple k-means clustering. 
+
+The K-Means clustering requires Java to run and our Least Squares Solution CCI
+calculator was written in Matlab and requires it to run.
+
+
 
