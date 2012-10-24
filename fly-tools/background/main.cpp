@@ -9,8 +9,12 @@
 #define array(i,j,k,l) (array[height*width*i + width*j + k + l])
 
 int nImages;
+
 unsigned long height = 0;
 unsigned long width = 0;
+
+using namespace std;
+using namespace cv;
 
 int findmax(long *p, int n) {
   int mx = 0, v = p[0];
@@ -23,8 +27,6 @@ int findmax(long *p, int n) {
   return mx;
 }
 
-using namespace std;
-using namespace cv;
 
 int main(int argc, char **argv ) {
 
@@ -59,9 +61,9 @@ int main(int argc, char **argv ) {
   IplImage *first_image = NULL;
   IplImage *output_image = NULL;
 
-  int i,j, k;
-  int height = 0;
-  int width = 0;
+  unsigned int i = 0;
+  unsigned int j = 0;
+  unsigned int k = 0;
 
   string filename;
 
@@ -75,11 +77,12 @@ int main(int argc, char **argv ) {
 
 
   // Read first line for our first image and rewind
-  input_file>>filename; 
+  getline(input_file, filename);
 
   first_image = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_UNCHANGED);
 
   if(!first_image) {
+
     cerr << "couldn't read first image" << endl;
     exit(1);
   } 
@@ -100,7 +103,7 @@ int main(int argc, char **argv ) {
 
   input_file.clear();
   input_file.seekg(0);
-  while(input_file>>filename) {
+  while (!getline(input_file, filename).eof()) {
     nImages++;
   }
 
@@ -116,7 +119,7 @@ int main(int argc, char **argv ) {
   input_file.clear();
   input_file.seekg(0);
 
-  while (input_file>>filename) {
+  while (!getline(input_file, filename).eof()) {
 
     IplImage *input_image = NULL;
     input_image = cvLoadImage(filename.c_str(), CV_LOAD_IMAGE_UNCHANGED);
