@@ -17,6 +17,8 @@ function [x, e] = LeastSquareSolution(fileNameA, fileNameB, output)
    
    solution=[];
    
+   cci_output_file = strcat(output, '/CCIs_combined.txt');
+
    for i=0:(total_folds-1)
        
         % debug
@@ -84,26 +86,20 @@ function [x, e] = LeastSquareSolution(fileNameA, fileNameB, output)
         %saving the calculated cis
         CI = [CI; ci];         % store the ci values
        
-    
-        %fid_debug = fopen(debug_file,'w');
-        %fprintf(fid_debug, '%s\n','Train data');
-        %fprintf(fid_debug, '%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f', A_);
-%         fprintf(fid_debug, '%s\n','Test data');
-%         fprintf(fid_debug, '%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f\t%8.6f', test_data);
         
         fid_debug = fopen(debug_file,'w');
-%         fprintf(fid_debug, '%s\n\n','Test data');
-        
         
         fprintf(fid_debug, '%s\n\n','new CI');
         fprintf(fid_debug, '%8.6f\n', ci);
+        
+        %output our cci's A.K.A. "new CI" into a seperate file as well.
+        fprintf(cci_output_file, '%8.6f\n', ci);
         
         fprintf(fid_debug, '%s\n\n','actual CI');
         actual_ci = b(test,:);
         fprintf(fid_debug, '%8.6f\n', actual_ci);
         fprintf(fid_debug, '%s\n\n','error');
         fprintf(fid_debug, '%8.6f\n', (ci-actual_ci));
-%         fprintf(fid_debug, '%s\n\n','Train data');
         
         
         fclose(fid_debug);
@@ -119,8 +115,6 @@ function [x, e] = LeastSquareSolution(fileNameA, fileNameB, output)
    fprintf(fid_ci, '%8.6f\n', CI);
    fclose(fid_ci);
    
-   %fid_solution_vectors = fopen('Solution_vectors.txt', 'w');
    dlmwrite('Solution_vectors.txt', solution, 'delimiter', '\t');
-   %fclose(fid_solution_vectors);
    
         
