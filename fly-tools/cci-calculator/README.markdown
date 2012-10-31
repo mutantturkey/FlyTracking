@@ -28,3 +28,8 @@ If we have 21 specimen per fold, use number of folds + 2 for the head argument,
 and the number of folds for the tail. This will give you proper results!
 
     for i in Fold_*.txt; do head $i -n 23 |  tail -n 21 >> output.txt; echo $i; done;
+
+The output of the file is in the order of your input, so just copy your data
+back into whatever spreadsheet you are using and it be good. If you notice
+that the numbers don't match up, make sure your ordering correctly!
+
