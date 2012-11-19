@@ -111,8 +111,8 @@ ostream &operator<<(ostream &out, FrameInfo & fI) {
 }
 
 void bubbleSort(vector<FlyObject > & fov) {
-  for(int i=1; i<fov.size(); i++) {
-    for(int j=0; j<fov.size()-i; j++) {
+  for(unsigned int i=1; i<fov.size(); i++) {
+    for(unsigned int j=0; j<fov.size()-i; j++) {
       FlyObject a = fov[j];
       FlyObject b = fov[j+1];
 
@@ -1316,7 +1316,7 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
   int flag = false;
   int maxSeqSize = 0;
   int st = 0;
-  for (int j=0; j<velocityDirs.size()-1; j++) {
+  for (unsigned int j=0; j<velocityDirs.size()-1; j++) {
     pair<double,double> prevVel = velocityDirs[j];
     pair<double, double> currVel  = velocityDirs[j+1];
 
