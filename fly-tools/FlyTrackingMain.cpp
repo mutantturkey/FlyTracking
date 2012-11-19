@@ -1,4 +1,3 @@
-#include <iostream>
 #include <iomanip>
 #include <string>
 #include <sstream>
@@ -21,14 +20,28 @@
 using namespace Magick;
 using namespace std;
 
+// One of these output streams will be used. If directed towards null, nothing happens, towards output, it will be printed
 ofstream nullLog;
 ostream* output;
+
+// Our output files for debugging and information
+ofstream foutLPS;
+ofstream foutSt;
+ofstream foutDebugCen;
+ofstream foutDebugSpeed;
+
 
 const double PI = atan(1.0)*4.0;
 const double FACTOR_EIGEN = 100;
 const int STUCKING_TO_A_SINGLE_BLOB = 1;
 const int SEPARATING_FROM_SINGLE_BLOB = 2;
 
+bool isInFemaleBlob;
+int maskImageHeight;
+int maskImageWidth;
+int diagLength;
+
+vector<pair<int,int> > bresenhamLine;
 Image* residual;
 
 vector<FlyObject > fOVector;
@@ -60,12 +73,12 @@ int sequenceSize=1;
 int startOfAOneObject = -1;
 int endOfAOneObject = -1;
 
-vector<string> fnVector;
-string inputFileName;
-
+// This decides if we want to output an overlay. You'll get the same results
+// either way but you won't be able to verify it. taken as an argument.
 bool writeFinalImages = false;
 
 // GLOBAL PATHS
+string inputFileName;
 string maskImagePath;
 string origImagePath;
 string finalOutputPath;
@@ -73,6 +86,7 @@ string outputFilePrefix;
 
 vector<pair<double, double> > velocityDirectionsF;
 vector<pair<double, double> > velocityDirectionsS;
+vector<string> fnVector;
 
 pair<double, double> avgVelocityF;
 pair<double, double> avgVelocityS;
@@ -83,6 +97,7 @@ pair<double, double> overAllVelocityS;
 vector<pair<double, double> > evDirectionF;
 vector<pair<double, double> > evDirectionS;
 
+// Information about frames that will be written out at the end of proessing.
 int totalMaleLookingAtFemale = 0;
 int totalFemaleLookingAtMale = 0;
 int totalSingleBlob = 0;
@@ -92,7 +107,6 @@ int totalSeparated = 0;
 map<unsigned int, unsigned int> centroidDistanceMap;
 map<unsigned int, unsigned int> headDirAngleMap;
 map<unsigned int, unsigned int> speedMap;
-
 
 void initSequence(){
   startOfATrackSequence = -1;
@@ -125,8 +139,7 @@ void bubbleSort(vector<FlyObject > & fov) {
   }
 }
 
-void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
-{
+void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap) {
   *output << "In the beginning of the write hist" << endl;
   *output << "dataMap size " << dataMap.size() << endl;
 
@@ -142,7 +155,6 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
   map<unsigned int, unsigned int>::iterator front = dataMap.begin(),
     back = dataMap.end();
   back--;
-
 
   unsigned int first = front->first, last = back->first;
   *output << "Min: " << first << " " << "Max: " << last << " " << "Count: " << last-first << endl;
@@ -174,24 +186,22 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap)
 
 }
 
-void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon=true, bool colorLookingFor=true);
-void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color=true);
-void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color=true);
-vector<double> covariantDecomposition(vector<pair<int,int> > & points);
-pair<int,int> getCentroid(vector<pair<int,int> > & points);
-bool isInterface(Image* orig, unsigned int x, unsigned int y);
-void writeFrameImage(int fn, string imS);
-void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob=false,bool unprocessed = false);
-void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob = false, bool unprocessed = false);
-double euclideanDist(FlyObject a, FlyObject b);
-bool identifyFlyObjectFromFrameToFrame(FrameInfo prevFI, FrameInfo& currentFI, bool gotRidOfSingleBlob=false) ;
-int roundT(double v) {return int(v+0.5);}
-void determineHeadDirection(int fileCounter);
-
-
-void normalizeVector(pair<double,double> &a);
 double calculateDotProduct(pair<double, double> v, pair<double, double> eV);
 void calculateHeadVector(FlyObject fO, pair<double,double> &headDirection);
+vector<double> covariantDecomposition(vector<pair<int,int> > & points);
+void determineHeadDirection(int fileCounter);
+void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob=false,bool unprocessed = false);
+void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob = false, bool unprocessed = false);
+void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color=true);
+double euclideanDist(FlyObject a, FlyObject b);
+void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon=true, bool colorLookingFor=true);
+void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color=true);
+pair<int,int> getCentroid(vector<pair<int,int> > & points);
+bool isInterface(Image* orig, unsigned int x, unsigned int y);
+bool identifyFlyObjectFromFrameToFrame(FrameInfo prevFI, FrameInfo& currentFI, bool gotRidOfSingleBlob=false) ;
+int roundT(double v) {return int(v+0.5);}
+void normalizeVector(pair<double,double> &a);
+void writeFrameImage(int fn, string imS);
 
 void normalizeVector(pair<double,double> &a) {
   double temp = a.first*a.first + a.second*a.second;
@@ -632,10 +642,7 @@ if (inWhite)
 }
 }*/
 
-bool isInFemaleBlob;
-int maskImageHeight;
-int maskImageWidth;
-vector<pair<int,int> > bresenhamLine;
+
 
 void putPixel(Image* maskImage, int x, int y) {
 
@@ -969,7 +976,7 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 
     default:
       *output << "No octant which should be a bug\n";
-      exit(0);
+      exit(EXIT_FAILURE);
       break;
   }
 
@@ -977,13 +984,19 @@ int draw_line_bm(Image* maskImage, int x0, int y0, int x1, int y1) {
 }
 
 
-double euclideanDist(pair<int, int > newLocation, pair<int, int> initLocation) {
-
+inline double euclideanDist(pair<int, int > newLocation, pair<int, int> initLocation) {
   double temp = pow((newLocation.first - initLocation.first), 2.0) + pow((newLocation.second - initLocation.second), 2.0);
   temp = sqrt(temp);
   return temp;
-
 }
+
+
+inline double getSpeed(pair<double, double> vector) {
+  double value = vector.first*vector.first + vector.second*vector.second;
+  value = sqrt(value);
+  return value;
+}
+
 
 int sequenceCondition(FrameInfo prevFI,FrameInfo currentFI) {
   bool prevFIsSingleBlob = prevFI.getIsSingleBlob();
@@ -1020,7 +1033,6 @@ void drawTheSequence(int startIndex, int endIndex, int isFirst, bool singleBlob,
   }
 
 }
-
 
 
 void objectHeadDirection(FlyObject prevFO, FlyObject &currentFO) {
@@ -1200,10 +1212,8 @@ void velocityDirection(int st, int end, pair<double, double > &velDirectionF, pa
   pair<int, int> cFFCentroid = cFFirstFO.getCentroid();
   pair<int, int> cFSCentroid = cFSecondFO.getCentroid();
 
-
   pair<int, int> pFFCentroid = pFFirstFO.getCentroid();
   pair<int, int> pFSCentroid = pFSecondFO.getCentroid();
-
 
   int velXFirst = cFFCentroid.first - pFFCentroid.first;
   int velYFirst = cFFCentroid.second - pFFCentroid.second;
@@ -1220,22 +1230,12 @@ void velocityDirection(int st, int end, pair<double, double > &velDirectionF, pa
 
   velDirectionF = cFVV;
   velDirectionS = cSVV;
-
-
 }
 
 
-double getSpeed(pair<double, double> vector) {
-  double value = vector.first*vector.first + vector.second*vector.second;
-  value = sqrt(value);
 
-  return value;
-
-
-}
 
 void velocityDirections(int stIndex, int endIndex) {
-
 
   velocityDirectionsF.clear();
   velocityDirectionsS.clear();
@@ -1309,7 +1309,6 @@ void velocityDirections(int stIndex, int endIndex) {
 }
 
 
-ofstream foutLPS;
 void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > velocityDirs, int &startIndex, int &endIndex) {
 
   int positiveVelSeqSize = 0;
@@ -1346,8 +1345,6 @@ void largestIncreasingPositiveDotProductSeq(vector<pair<double, double> > veloci
       //*output << "st "<<startIndex<<endl;
       //*output << "end "<<endIndex<<endl;
     }
-
-
 
   }
 
@@ -1392,7 +1389,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
     FrameInfo currentFI = fIVector[i];
     vector<FlyObject > cFOVector = currentFI.getFOVector();
     FlyObject cFFO = cFOVector[object-1];
-    pair<double , double> cFVV = cFFO.getVelocityV();
+    //pair<double , double> cFVV = cFFO.getVelocityV();
     //*output << "Velocity before normalization "<<cFVV.first<<","<<cFVV.second<<endl;
     //normalizeVector(cFVV);
     /**output << "Velocity after normalization "<<cFVV.first<<","<<cFVV.second<<endl;
@@ -1415,7 +1412,6 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       maxVelValue = velValue;
       maxVelValIndex = i;
     }
-
 
   }
 
@@ -1442,7 +1438,7 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
     fIVector[t] = currentFI;
   }
   else {
-    pair<double, double> tempVelocity = cFSecondFO.getVelocityV();
+    //pair<double, double> tempVelocity = cFSecondFO.getVelocityV();
     //*output << "Velocity was "<<tempVelocity.first<<","<<tempVelocity.second<<endl;
     *output << "Setting the head direction according to the representative velocity in the longest positive sequence"<<endl;
 
@@ -1534,12 +1530,9 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       }
 
       currentFI.setFOVector(cFOVector);
-
       fIVector[i] = currentFI;
 
     }
-
-
 
   }
   // propagate upwards
@@ -1558,25 +1551,17 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       FlyObject cFSecondFO = cFOVector[1];
 
       if (object == 1) {
-        //*output << "First object extract"<<endl;
         objectHeadDirection(pFFirstFO, cFFirstFO, false);
-        //*output << "First object update"<<endl;
         cFOVector[0] = cFFirstFO;
-
         pFFirstFO = cFFirstFO;
 
       } else {
-        //*output << "Second object extract"<<endl;
         objectHeadDirection(pFSecondFO, cFSecondFO, false);
-        //*output << "Second object update"<<endl;
         cFOVector[1] = cFSecondFO;
-
         pFSecondFO = cFSecondFO;
-
       }
 
       currentFI.setFOVector(cFOVector);
-
       fIVector[i] = currentFI;
 
     }
@@ -1616,12 +1601,9 @@ void propagateDirections(int object, int s, int e, int origStart, int origEnd) {
       }
 
       currentFI.setFOVector(cFOVector);
-
       fIVector[i] = currentFI;
     }
-
   }
-
 }
 
 
@@ -1641,7 +1623,6 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
   *output << "Size of evDirectionF "<<evDirectionF.size()<<endl;
   *output << "Size of evDirectionS "<<evDirectionS.size()<<endl;
 
-
   // debug
   *output << "------------ALL VELOCITY AND CORRESPONDING EV-------------\n";
   int a;
@@ -1659,14 +1640,14 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
 
     *output << "Second object velocity = "<<w.first<<","<<w.second<<endl;
     *output << "Second object ev       = "<<wEV.first<<","<<wEV.second<<endl;
-
-
   }
+
   *output << "Last frame index wont have velocity a+st("<<(a+st)<<") = end("<<end<<") "<<fnVector[a+st]<<endl;
   *output << "------------END-------------\n";
 
   int s;
   int e;
+
   foutLPS<<"------------------------------------------------------------------"<<endl;
   largestIncreasingPositiveDotProductSeq(evDirectionF, s, e);
   *output << "Positive indexes are "<<fnVector[st+s]<<" to "<<fnVector[st+e]<<endl;
@@ -1686,6 +1667,8 @@ void calculateHeadDirection(int st, int end, int maxDistIndex) {
   propagateDirections(2, si, ei, st, end);
 
 }
+
+
 // min dist from prev frame's 0th index object
 void objectCorrespondence(FrameInfo &prevFI, FrameInfo &currentFI) {
 
@@ -1853,17 +1836,10 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
     drawTheSequence(startOfATrackSequence, endOfATrackSequence, 0, false, false);
   }
 
-
 }
 
-int diagLength;
-ofstream foutSt;
-ofstream foutDebugCen;
-ofstream foutDebugSpeed;
 
-
-int main(int argc, char **argv)
-{
+int main(int argc, char **argv) {
 
   int c;	
   bool verbose = false;
@@ -1871,8 +1847,7 @@ int main(int argc, char **argv)
   opterr = 0;
 
   while ((c = getopt (argc, argv, "i:f:m:p:o:hxv")) != -1)
-    switch (c)
-    {
+    switch (c) {
       case 'i':
         inputFileName = optarg;
         break;
@@ -1890,7 +1865,7 @@ int main(int argc, char **argv)
         break;
       case 'h':
         cout << usage << endl;
-        exit(1);
+        exit(EXIT_FAILURE);
         break;
       case 'x':
         writeFinalImages = true;
@@ -1913,31 +1888,32 @@ int main(int argc, char **argv)
     cerr << "output path: " << finalOutputPath << endl;
     cerr << "mask path: " << maskImagePath << endl;
     cerr << "output prefix: " << outputFilePrefix << endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }	
+
   string fileName;	
   ifstream inputFile(inputFileName.c_str());
-  // save the input file name
 
   if (inputFile.fail() ) {
     cerr << "cannot open the input file that contains name of the input images\n";
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   string statFileName = finalOutputPath + outputFilePrefix + "_statFile.txt";
-  //*output << "Statfilename is "<<statFileName<<endl;
   foutSt.open(statFileName.c_str());
+
   if (foutSt.fail()) {
     cerr<<"cannot open the statfile"<<endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // debug file
   string foutDebugCenFN = finalOutputPath + outputFilePrefix + "_statFileDebug.txt";
   foutDebugCen.open(foutDebugCenFN.c_str());
+
   if (foutDebugCen.fail()) {
     cerr << "cannot open the statDebug file"<<endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // debug file speed distribution
@@ -1945,7 +1921,7 @@ int main(int argc, char **argv)
   foutDebugSpeed.open(foutDebugSpeedFN.c_str());
   if (foutDebugSpeed.fail()) {
     cerr << "cannot open the speedDebug file"<<endl;
-    exit(1);
+    exit(EXIT_FAILURE);
   }
 
   // open the file for statistics
@@ -1954,9 +1930,8 @@ int main(int argc, char **argv)
   *output << "LongestPositive.txt file name is "<<lPSFileName<<endl;
   foutLPS.open(lPSFileName.c_str());
 
-  unsigned int objCount = 0;
-
-  int frameCounter = 0;
+  // unsigned int objCount = 0;
+  //int frameCounter = 0;
   int fileCounter=0;
 
   char buffer[100];
@@ -1966,11 +1941,12 @@ int main(int argc, char **argv)
   vector<FlyObject > tempFOV;
 
   // to find the new head direction
-  bool currentlyCalculatingHead = true;
+  //bool currentlyCalculatingHead = true;
 
   while (inputFile>>fileName) {
 
     int fi = fileName.find("_");
+    // Be aware that this limits us to sample size of 99,999 (55.55 minutes)
     // current sequence numbers spans from 0 - 18019, so 5 digits are needed
     int span = 5;
     string tempString = fileName.substr(fi+1,span);
@@ -1997,7 +1973,7 @@ int main(int argc, char **argv)
     // residual image is initialized with black representing not visited.
     residual = new Image(buffer, "black");
 
-    //*output<<"reading file "<<fileName<<endl;
+    *output<<"reading file "<<fileName<<endl;
 
     tempFOV.clear();
 
@@ -2011,10 +1987,8 @@ int main(int argc, char **argv)
 
         if ( s > 0 )
         {
-
           //		*output << "size of the object is: " << s <<endl;
           vector<double> eigenVal = covariantDecomposition(shape);
-
           {					
             //objCount++;
 
@@ -2028,13 +2002,10 @@ int main(int argc, char **argv)
                 pair<double, double> (eigenVal[4], eigenVal[5]),
                 0.0);
             tempFOV.push_back(tempFO);
-
           }
         }
-
       }
     }
-
 
     delete img;
     delete residual;
@@ -2045,10 +2016,8 @@ int main(int argc, char **argv)
     fOVector.clear();
 
     for (int ti=0; ti<tempFOV.size(); ti++){
-
       FlyObject a = tempFOV[ti];
       fOVector.push_back(a);
-
     }
 
     bool currentFrameIsSingleBlob = false;
@@ -2131,18 +2100,11 @@ int main(int argc, char **argv)
       //*output << "Done for "<<fnVector[fileCounter-1]<<endl;
     }
 
-    sequenceSize++;
-
     // increase the frame Counter
     fileCounter++;
 
-
-    //*output << "Going to the next step"<<endl;
-
-    //open this after debug
-    /**/
-
-
+    // increase the sequence size
+    sequenceSize++;
   }
 
   //*output << "No more files "<<startOfAOneObject<<" "<<endOfAOneObject<<endl;
@@ -2251,31 +2213,46 @@ int hitTheFly(Image* maskImage, int &intersectX, int &intersectY) {
 
 void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_x, int cen_y,  bool eVDirection) {
 
-
   string segmImageFileName = maskImagePath + fileName;
 
+  int width = 0;
+  int height = 0;
+
+  int x0, y0, x1, y1;
+
+  x0 = cen_x;
+  y0 = cen_y;
+
+  double ev_x;
+  double ev_y;
+
+  char buffer[100];
+
+  bool found = false;	
+
+  vector<pair<int, int> > foundShape;
+  vector<pair<int,int> > shape;
+
+  Image *image, *mask;
+
   cout << "Segmented image "<<segmImageFileName<<"\n";
+
   if (desiredSize == otherSize) {
     foutDebugCen<<"File name "<<segmImageFileName<<endl;
     foutDebugCen<<"MaleSize == FemaleSize\n";
     foutDebugCen<<"DesiredCentroid.first, DesiredCentroid.second = ("<<cen_x<<","<<cen_y<<")"<<endl;
   }
 
-  Image* image = new Image(segmImageFileName.c_str());
+  image = new Image(segmImageFileName.c_str());
 
+  width = image->columns();
+  height = image->rows();
 
-  int width = image->columns();
-  int height = image->rows();
-
-  char buffer[100];
   sprintf(buffer,"%ix%i",width,height);
 
   // the residual image should be newed
   residual = new Image(buffer, "black");
 
-  bool found = false;	
-  vector<pair<int, int> > foundShape;
-  vector<pair<int,int> > shape;
   *output<<"Detecting the male object for finding the start point"<<endl;
   for (int x = 0; x<width and found == false; x++) {
     for (int y = 0; y<height and found == false; y++) {
@@ -2338,18 +2315,10 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
     *output<<"foundshape is assigned a value"<<endl;
   } else {
     *output<<"ERROR: foundshape is not assigned a value so the next step would draw a line over an empty image"<<endl;
-    exit(0);
+    exit(EXIT_FAILURE);
   }
 
   vector<double> eigenVal = covariantDecomposition(foundShape);
-
-  int x0, y0, x1, y1;
-
-  x0 = cen_x;
-  y0 = cen_y;
-
-  double ev_x;
-  double ev_y;
 
   if (eVDirection == true) {
     ev_x = static_cast<double> (x0) + static_cast<double> (diagLength)*eigenVal[4];
@@ -2367,19 +2336,19 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   *output<<"Endpoint: centroid (x0,y0)==("<<x0<<","<<y0<<")"<<endl;
   *output<<"Startpoint: OutsidePointInEVDirection (x1,y1)==("<<x1<<","<<y1<<")"<<endl;
 
-  Image* maskImage = new Image(buffer, "black");
+  mask = new Image(buffer, "black");
 
   for (int i=0; i<foundShape.size(); i++) {
     pair<int,int > point = foundShape[i];
-    maskImage->pixelColor(point.first, point.second,"white");
+    mask->pixelColor(point.first, point.second,"white");
   }
 
-  /*int hits= */ draw_line_bm(maskImage, x1, y1, x0, y0);
+  /*int hits= */ draw_line_bm(mask, x1, y1, x0, y0);
 
 
-  //maskImage->strokeColor("red");
-  //maskImage->draw(DrawableLine(x1, y1, x0, y0));
-  //maskImage->write("test.png");
+  //mask->strokeColor("red");
+  //mask->draw(DrawableLine(x1, y1, x0, y0));
+  //mask->write("test.png");
 
   *output<<"BresenhamLine size is "<<bresenhamLine.size()<<endl;
   /*	if (hits == 1) {
@@ -2389,7 +2358,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   if (bresenhamLine.size() > 0) {
   pair<int, int> temp = bresenhamLine[bresenhamLine.size()-1];
   *output << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
-  ColorMono c = maskImage->pixelColor(temp.first, temp.second);
+  ColorMono c = mask->pixelColor(temp.first, temp.second);
   //maleSP_x = prev_x;
   //maleSP_y = prev_y;
 
@@ -2403,7 +2372,7 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   } 
   else {
   isFoundStartPoint = false;
-  *output<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
+  *output<<"The object is at the border in the ask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
   }
 
   } else {
@@ -2416,13 +2385,13 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
   if (bresenhamLine.size() > 0) {
     pair<int, int> temp = bresenhamLine[bresenhamLine.size()-1];
     *output << "Finding the starting point: Hits source at "<<temp.first<<","<<temp.second<<endl;
-    ColorMono c = maskImage->pixelColor(temp.first, temp.second);
+    ColorMono c = mask->pixelColor(temp.first, temp.second);
     //maleSP_x = prev_x;
     //maleSP_y = prev_y;
 
     if (c.mono() == true) {
       *output << "start point from the source object should be black"<<endl;
-      exit(0);
+      exit(EXIT_FAILURE);
     }
     isFoundStartPoint = true;
     // reset it after its corresponding hitTheFly() function call
@@ -2433,10 +2402,9 @@ void findTheStartPoint(string fileName, int desiredSize, int otherSize, int cen_
     *output<<"The object is at the border in the mask image. BresenhamLine vector is empty. Size : "<<bresenhamLine.size()<<endl;
   }
 
-
   delete residual;
   delete image;
-  delete maskImage;
+  delete mask;
 }
 
 
@@ -2513,12 +2481,13 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 
     headDirAngleMap[a]++;
 
+    // TODO: what is going on with the constant comparison?
     foutSt<<"Dot product was "<<dp<<endl;
     foutSt<<"Angle between ("<<maleHeadDir.first<<","<<maleHeadDir.second<<") and ("<<femaleHeadDir.first<<","<<femaleHeadDir.second<<") : "<<a<<endl;
     if(a == -2147483648 || a == 2147483648) {
       *output<<"Angle between ("<<maleHeadDir.first<<","<<maleHeadDir.second<<") and ("<<femaleHeadDir.first<<","<<femaleHeadDir.second<<") : "<<a<<endl;
       *output<<"Incorrect angle calculation :"<<a<<endl;
-      exit(1);
+      exit(EXIT_FAILURE);
     }
     // 3. generate number of times male is looking at the female
     if (isHitting == true) {
@@ -2569,7 +2538,7 @@ void calculateStatistics(FrameInfo currentFI, string fileName, int isFirst, bool
 void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool singleBlob, bool unprocessed) {
 
   *output << "isFirst is "<<isFirst<<endl;
-  Image* img;
+  Image* img = NULL;
   string inputFileName;
   string outputFileName;
   if(writeFinalImages) {	
@@ -2590,7 +2559,7 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
   // the unprocessed flag is used to handle those sequence that are less than 15 frames long and flies are separated there.
   if (singleBlob == false and unprocessed == false) {
 
-    /////////// find the sizes for finding the start point
+    // find the sizes for finding the start point
     FlyObject fO = fOVector[isFirst];
     int maleSize = fO.getArea();
     fO = fOVector[1-isFirst];
@@ -2701,14 +2670,11 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
         }
 
         // draw the velocity vector
-
         img->strokeColor("blue");
         pair<double, double> velocityV = currentFO.getVelocityV();
         ev_x = static_cast<double>(centroid.first) + 30.0 * velocityV.first;
         ev_y = static_cast<double>(centroid.second) + 30.0 * velocityV.second;
         img->draw(DrawableLine( centroid.first, centroid.second, static_cast<int>(ev_x), static_cast<int>(ev_y) ));
-
-
 
         // draw the historical head vector
         img->strokeColor("white");
@@ -2717,23 +2683,19 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
         ev_y = static_cast<double> (centroid.second) + 25.0*headV.second;
         img->draw( DrawableLine(centroid.first, centroid.second, static_cast<int> (ev_x), static_cast<int> (ev_y)) );
 
-
         //draw the object tracking circle
         if (n == isFirst and n==0) {
           *output << "Tracking the n = "<<n<<endl;
           img->strokeColor("yellow");
           img->draw(DrawableCircle(centroid.first, centroid.second, centroid.first+5, centroid.second));
           img->pixelColor(prev_x, prev_y, "red");
-
         } else if ( n == isFirst and n==1) {
-
           *output << "Tracking the "<<n<<endl;
           img->strokeColor("yellow");
           img->fillColor("none");
           img->pixelColor(prev_x, prev_y, "red");
           img->draw(DrawableCircle(centroid.first, centroid.second, centroid.first+5, centroid.second));
         }
-
 
       }
     }
@@ -2743,11 +2705,9 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
     img->write(outputFileName.c_str());
     delete img;
   }
-
-  // when do not want to identify on the original comment below line and uncomment the above one
-
   delete maskImage;
 
+  // TODO: Wtf is going on here?
   if (isHitting == 1 || isHittingFemaleToMale == 0)
     calculateStatistics(currentFI, fileName, isFirst, singleBlob, true, false, unprocessed);
   else if (isHitting == 0 || isHittingFemaleToMale == 1)
@@ -2760,10 +2720,8 @@ void drawTheFlyObject(FrameInfo currentFI, string fileName, int isFirst, bool si
 }
 
 
-void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon, bool colorLookingFor)
-{
+void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eightCon, bool colorLookingFor) {
   assert(residual != NULL);
-
   if (eightCon == true)
     eightConnObj(img, x, y, shape, colorLookingFor);
   else {
@@ -2772,8 +2730,7 @@ void findObj(Image* img, int x, int y, vector<pair<int,int> > & shape ,bool eigh
 }
 
 
-void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color)
-{
+void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color) {
   int width = img->columns(),height = img->rows();
 
   // boundary violation check
@@ -2813,8 +2770,7 @@ void fourConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool c
 
 }
 
-void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color)
-{
+void eightConnObj(Image* img, int x, int y, vector<pair<int, int> > & obj, bool color) {
   int width = img->columns(),height = img->rows();
 
   // boundary violation check
