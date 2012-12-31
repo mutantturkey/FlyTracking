@@ -3,7 +3,7 @@ Automated Categorization of Drosophila Learning and Memory Behaviors using Video
 
 For more information about this project, goto:
 
-https://www.cs.drexel.edu/~david/Papers/Md_Reza_MS_Thesis.pdf_
+https://www.cs.drexel.edu/~david/Papers/Md_Reza_MS_Thesis.pdf
 
 This repository contains all of the source codes used for the Fly Tracking project.
 
