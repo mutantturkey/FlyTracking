@@ -8,12 +8,13 @@
 #include <cassert>
 #include <cstdlib>
 
-#include <ImageMagick/Magick++.h>
+#include <Magick++.h>
 
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_vector.h>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_eigen.h>
+#include <unistd.h>
 
 #include "FrameInfo.h"
 
@@ -139,7 +140,48 @@ void bubbleSort(vector<FlyObject > & fov) {
   }
 }
 
-void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap) {
+
+void getMeanStdDev(map<unsigned int, unsigned int> dataMap, double *mean, double *standardDev) {
+    // mean = 1/N*(sum(i*H_i)) for i = 0 to M-1
+    double sumOfValues = 0.0;
+    double i = 0.0;
+    double N = 0.0;
+    double M = 0.0;
+
+		vector<double> currentHistogramValues;
+
+		for(i = 0; i < dataMap.size(); i++) {
+			sumOfValues = sumOfValues + i*dataMap[i];
+			N += dataMap[i];
+
+			cout << "sum:" << sumOfValues << endl;
+			cout << "N:" << N << endl;
+			cout << "i:" << i << endl;
+		}
+
+    // mean
+    *mean = sumOfValues/N;
+		double lmean = 0;
+    lmean = sumOfValues/N;
+		cout << "mean:" << *mean << endl;
+		cout << "mean:" << lmean << " = " << sumOfValues << "/" << N << endl;
+
+    // sigma^2 = (sum( (i-mean)^2*H_i ) )/(N-1) for i = 0 to M-1
+    *standardDev = 0.0;
+    double sumSquaredResults = 0.0;
+    int j = 0;
+    for ( i = 0.0; i < dataMap.size(); i++) {
+      sumSquaredResults += pow((i-*mean), 2.0)*dataMap[j];
+			*output << "sumsqres:" << sumSquaredResults << endl;
+      j++;
+    }
+
+    // standard deviation
+    *standardDev = sumSquaredResults/(N-1);
+    *standardDev = sqrt(*standardDev);
+}
+
+double writeHist(const char* filename, map<unsigned int, unsigned int> dataMap) {
   *output << "In the beginning of the write hist" << endl;
   *output << "dataMap size " << dataMap.size() << endl;
 
@@ -148,7 +190,7 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap) {
     ofstream fout(filename);
     fout <<"No entry in the histogram and size is " << dataMap.size() << endl;
     fout.close();
-    return;
+    return 0;
 
   }
 
@@ -183,7 +225,8 @@ void writeHist(const char* filename, map<unsigned int, unsigned int> dataMap) {
   catch (...) {
     cerr << "Bad memory loc for opening file" << endl;
   }
-
+	
+	return 0;
 }
 
 double calculateDotProduct(pair<double, double> v, pair<double, double> eV);
@@ -1839,341 +1882,6 @@ void processASequence(int startOfATrackSequence, int endOfATrackSequence) {
 }
 
 
-int main(int argc, char **argv) {
-
-  int c;	
-  bool verbose = false;
-  string usage = "Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -p <outputFilePrefix>";
-  opterr = 0;
-
-  while ((c = getopt (argc, argv, "i:f:m:p:o:hxv")) != -1)
-    switch (c) {
-      case 'i':
-        inputFileName = optarg;
-        break;
-      case 'o':
-        origImagePath = optarg;
-        break;
-      case 'f':
-        finalOutputPath = optarg;
-        break;
-      case 'm':
-        maskImagePath = optarg;
-        break;
-      case 'p':
-        outputFilePrefix = optarg;
-        break;
-      case 'h':
-        cout << usage << endl;
-        exit(EXIT_FAILURE);
-        break;
-      case 'x':
-        writeFinalImages = true;
-        break;
-      case 'v':
-        verbose = true;
-        break;
-      default:
-        break;
-    }
-
-  (verbose) ? output = &cout : output = &nullLog; 
-
-  *output << "verbose logging out" << endl;
-
-  if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
-    cerr <<  usage << endl;
-    cerr << "input name: " << inputFileName << endl;
-    cerr << "original path: " << origImagePath << endl;
-    cerr << "output path: " << finalOutputPath << endl;
-    cerr << "mask path: " << maskImagePath << endl;
-    cerr << "output prefix: " << outputFilePrefix << endl;
-    exit(EXIT_FAILURE);
-  }	
-
-  string fileName;	
-  ifstream inputFile(inputFileName.c_str());
-
-  if (inputFile.fail() ) {
-    cerr << "cannot open the input file that contains name of the input images\n";
-    exit(EXIT_FAILURE);
-  }
-
-  string statFileName = finalOutputPath + outputFilePrefix + "_statFile.txt";
-  foutSt.open(statFileName.c_str());
-
-  if (foutSt.fail()) {
-    cerr<<"cannot open the statfile"<<endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // debug file
-  string foutDebugCenFN = finalOutputPath + outputFilePrefix + "_statFileDebug.txt";
-  foutDebugCen.open(foutDebugCenFN.c_str());
-
-  if (foutDebugCen.fail()) {
-    cerr << "cannot open the statDebug file"<<endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // debug file speed distribution
-  string foutDebugSpeedFN = finalOutputPath + outputFilePrefix + "_speedDebug.txt";
-  foutDebugSpeed.open(foutDebugSpeedFN.c_str());
-  if (foutDebugSpeed.fail()) {
-    cerr << "cannot open the speedDebug file"<<endl;
-    exit(EXIT_FAILURE);
-  }
-
-  // open the file for statistics
-  string lPSFileName("LongestPositive.txt");
-  lPSFileName = finalOutputPath + outputFilePrefix + "_" + lPSFileName;
-  *output << "LongestPositive.txt file name is "<<lPSFileName<<endl;
-  foutLPS.open(lPSFileName.c_str());
-
-  // unsigned int objCount = 0;
-  //int frameCounter = 0;
-  int fileCounter=0;
-
-  char buffer[100];
-  string imgSize;
-  //	FlyObject a,b;
-  vector<pair<int,int> > shape;
-  vector<FlyObject > tempFOV;
-
-  // to find the new head direction
-  //bool currentlyCalculatingHead = true;
-
-  while (inputFile>>fileName) {
-
-    int fi = fileName.find("_");
-    // Be aware that this limits us to sample size of 99,999 (55.55 minutes)
-    // current sequence numbers spans from 0 - 18019, so 5 digits are needed
-    int span = 5;
-    string tempString = fileName.substr(fi+1,span);
-    int frameCounter = atoi(tempString.c_str());
-    //*output << frameCounter<<endl;
-
-    string fileNameForSave = fileName;
-
-    // save the name in the vector
-    fnVector.push_back(fileName);
-
-    fileName = maskImagePath + fileName;
-    cout << "Reading file "<<fileName<<endl;
-    Image* img = new Image(fileName.c_str());
-    int width = img->columns(),height = img->rows();
-    diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
-
-    //*output << "Diagonal length is "<<diagLength<<endl;
-    //		Image* imgWithInfo;
-    //		imgWithInfo = new Image(fileName.c_str());
-    sprintf(buffer,"%ix%i",width,height);
-    string imsize(buffer);
-    imgSize = imsize;
-    // residual image is initialized with black representing not visited.
-    residual = new Image(buffer, "black");
-
-    *output<<"reading file "<<fileName<<endl;
-
-    tempFOV.clear();
-
-    for (int x = 0; x<width; x++) {
-      for (int y = 0; y<height; y++) {
-
-        //*output<<"comes here"<<endl;
-        shape.clear();
-        findObj(img, x, y, shape, true, true);
-        unsigned int s = shape.size();
-
-        if ( s > 0 )
-        {
-          //		*output << "size of the object is: " << s <<endl;
-          vector<double> eigenVal = covariantDecomposition(shape);
-          {					
-            //objCount++;
-
-            double velocity_x=0.0, velocity_y=0.0;
-            // save the object information
-            FlyObject tempFO(s, 
-                pair<int, int> (eigenVal[6], eigenVal[7]), 
-                pair<double, double> (eigenVal[4], eigenVal[5]), 
-                pair<double,double> (velocity_x, velocity_y),
-                false,
-                pair<double, double> (eigenVal[4], eigenVal[5]),
-                0.0);
-            tempFOV.push_back(tempFO);
-          }
-        }
-      }
-    }
-
-    delete img;
-    delete residual;
-
-    //		*output<<"Sorting the objects according to size"<<endl;
-    //		bubbleSort(tempFOV);
-
-    fOVector.clear();
-
-    for (int ti=0; ti<tempFOV.size(); ti++){
-      FlyObject a = tempFOV[ti];
-      fOVector.push_back(a);
-    }
-
-    bool currentFrameIsSingleBlob = false;
-    // if there is only one object then state of the system is single blob
-    if (fOVector.size() == 1 and currentFrameIsSingleBlob == false) {
-      currentFrameIsSingleBlob = true;
-
-      // if start as a single blob
-      if (fileCounter == 0) {
-        //	*output << "Start as a single blob"<<endl;
-        startOfAOneObject = fileCounter;
-      }
-
-    }
-
-    FrameInfo tempFI(frameCounter, fOVector, currentFrameIsSingleBlob);
-    fIVector.push_back(tempFI);
-    FrameInfo currentFI = fIVector[fileCounter];
-
-    // start processing the sequence if applicable
-    if (sequenceSize > 1) {
-
-      FrameInfo prevFI = fIVector[fileCounter-1];
-
-      int seqCond = sequenceCondition(prevFI, currentFI);
-
-      if (seqCond == STUCKING_TO_A_SINGLE_BLOB) {
-
-        endOfATrackSequence = fileCounter-1;
-
-        // save the index for printing the one object later on
-        startOfAOneObject = fileCounter;
-
-      } else if (seqCond == SEPARATING_FROM_SINGLE_BLOB) {
-
-        startOfATrackSequence = fileCounter;
-
-        // draw the single blob sequence
-        endOfAOneObject = fileCounter - 1;
-        *output << "Only one object StartIndex "<<startOfAOneObject<<" endIndex "<<endOfAOneObject<<" and seqSize "<<sequenceSize<<endl;
-        // use the two variables (startOfAOneObject, endOfAOneObject) pair to draw the single-blob objects.
-        // third parameter is used to indicate whether the current sequence is SINGLE_BLOB. So true is passed.
-        // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
-        // since we are considering the sequence length >=  15 to be a single blob state, so pass false parameter.
-        drawTheSequence(startOfAOneObject, endOfAOneObject,0, true, false);
-        startOfAOneObject = -1;
-        endOfAOneObject = -1;
-        //startOfATrackSequence = 1;
-        sequenceSize = 1;
-      }
-
-
-      if(seqCond == STUCKING_TO_A_SINGLE_BLOB) {
-        *output << "StartIndex "<<startOfATrackSequence<<" endIndex "<<endOfATrackSequence<<" and seqSize "<<sequenceSize<<endl;	
-        // if a sequence size is greater than 15 then it is processed. endOfATrackSequence - startOfATrackSequence == 15 when the size of the sequence is 16.
-        // endOfATrackSequence - startOfATrackSequence > 15 when the size of the sequence is > 16.
-        if ((endOfATrackSequence - startOfATrackSequence) >=15 ) {
-          processASequence(startOfATrackSequence, endOfATrackSequence);
-          *output << "Done processing"<<endl;
-        } else {
-          // use the two variables (startOfATrackSequence, endOfATrackSequence) pair to draw the unprocessed frames.
-          // third parameter is used to indicate whether the current sequence is not actual SINGLE_BLOB. So false is passed.
-          // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
-          // since we are considering the sequence length <  15 to be a single blob state, so pass false parameter.
-          *output << "Sequence is only "<<(endOfATrackSequence-startOfATrackSequence+1)<<" images long so assumed as a single blob"<<endl;
-          drawTheSequence(startOfATrackSequence, endOfATrackSequence, 0, false, true);
-
-          // increase the unprocessed frame counter
-          //totalUnprocessedFrame = totalUnprocessedFrame + (endOfATrackSequence - startOfATrackSequence + 1);
-          foutSt<<"-------------------------------"<<endl;
-          foutSt<<"Unprocessed size "<<(endOfATrackSequence-startOfATrackSequence+1)<<endl;
-          foutSt<<"Total unprocessed size "<<totalUnprocessedFrame<<endl;
-          foutSt<<"-------------------------------"<<endl;
-        }
-
-        initSequence();
-        //*output << "Start of a single blob "<<startOfAOneObject<<" and end of a single blob "<<endOfAOneObject<<endl;
-
-      }
-      //*output << "Done for "<<fnVector[fileCounter-1]<<endl;
-    }
-
-    // increase the frame Counter
-    fileCounter++;
-
-    // increase the sequence size
-    sequenceSize++;
-  }
-
-  //*output << "No more files "<<startOfAOneObject<<" "<<endOfAOneObject<<endl;
-  inputFile.close();
-
-  //open this after debug
-  /**/
-  if (startOfATrackSequence!=-1 && endOfATrackSequence == -1) {
-    if ((sequenceSize-1) > 15 ) {
-
-      *output << "Last sequence that does not stick to a single blob status startIndex "<<startOfATrackSequence<<" endIndex "<<(sequenceSize+startOfATrackSequence-2)<<endl;
-      processASequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2));
-      *output << "Done processing"<<endl;
-
-    } else {
-      // this case was not handled earlier. It can happen that the flies are separated during the last sequences and less than 15 frames long.
-      *output << "Sequence is only "<<(sequenceSize-1)<<" images long so assumed as a single blob"<<endl;
-      drawTheSequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2), 0, false, true);
-      foutSt<<"-------------------------------"<<endl;
-      foutSt<<"Unprocessed size "<<(sequenceSize-1)<<endl;
-      foutSt<<"Total unprocessed size "<<totalUnprocessedFrame<<endl;
-      foutSt<<"-------------------------------"<<endl;
-
-    }
-    initSequence();
-
-  } else if (startOfAOneObject != -1 && endOfAOneObject == -1) {
-    *output << "Last sequence that does not separate from one object state\n";
-    drawTheSequence(startOfAOneObject, (sequenceSize+startOfAOneObject - 2), 0, true, false);
-    endOfAOneObject = -1;
-    startOfAOneObject = -1;
-    sequenceSize = 1;
-  }
-
-
-  string cDDistFileName = finalOutputPath + outputFilePrefix + "_centroidDist.txt";
-  string hDAngleDistFileName = finalOutputPath + outputFilePrefix + "_headDist.txt";
-  string speedDistFileName = finalOutputPath + outputFilePrefix + "_speedDist.txt";
-
-  writeHist(cDDistFileName.c_str(), centroidDistanceMap);
-  writeHist(hDAngleDistFileName.c_str(), headDirAngleMap);
-  writeHist(speedDistFileName.c_str(), speedMap);
-
-  // new calculation of percentage look at should consider only those frames where the flies are separated
-  double percentageLookingAt = static_cast<double>(totalMaleLookingAtFemale+totalFemaleLookingAtMale)/static_cast<double>(totalSeparated);
-  percentageLookingAt *= 100.0;
-
-  double percentageSingleBlob = static_cast<double>(totalSingleBlob)/static_cast<double>(fileCounter);
-  percentageSingleBlob *= 100.0;
-
-  foutSt<<"Total number of single blob "<<totalSingleBlob<<endl;
-  foutSt<<"Total number of male looking at "<<totalMaleLookingAtFemale<<endl;
-  foutSt<<"Total number of female looking at "<<totalFemaleLookingAtMale<<endl;
-  foutSt<<"Total number of looking at "<<(totalMaleLookingAtFemale+totalFemaleLookingAtMale)<<endl;
-  foutSt<<"Total number of unprocessed frame "<<totalUnprocessedFrame<<endl;
-  foutSt<<"Total number of frame where flies are separated (from the counter totalSeparated) "<<totalSeparated<<endl;
-  foutSt<<"Total number of frame where flies are separated "<<(fileCounter-totalUnprocessedFrame-totalSingleBlob)<<endl;
-  foutSt<<"Total number of frame "<<fileCounter<<endl;
-  foutSt<<"Percentage of frame in looking at mode "<<percentageLookingAt<<endl;
-  foutSt<<"Percentage of frame single blob "<<percentageSingleBlob<<endl;
-
-  foutSt.close();
-  foutDebugCen.close();
-  foutLPS.close();
-  foutDebugSpeed.close();
-
-  return 0;
-}
-
 
 // is set each time the start is found
 // useful when one blob is detected on the border of the mask image
@@ -2939,3 +2647,356 @@ bool isInterface(Image* orig, unsigned int x, unsigned int y) {
   else
     return false;
 }
+
+int main(int argc, char **argv) {
+
+  int c;	
+  bool verbose = false;
+  string usage = "Usage: FlyTracking -i <inputFile.txt> -o <originalImagePath> -f <finalOutputPath> -m <maskImagePath> -p <outputFilePrefix>";
+  int opterr = 0;
+
+  while ((c = getopt (argc, argv, "i:f:m:p:o:hxv")) != -1)
+    switch (c) {
+      case 'i':
+        inputFileName = optarg;
+        break;
+      case 'o':
+        origImagePath = optarg;
+        break;
+      case 'f':
+        finalOutputPath = optarg;
+        break;
+      case 'm':
+        maskImagePath = optarg;
+        break;
+      case 'p':
+        outputFilePrefix = optarg;
+        break;
+      case 'h':
+        cout << usage << endl;
+        exit(EXIT_FAILURE);
+        break;
+      case 'x':
+        writeFinalImages = true;
+        break;
+      case 'v':
+        verbose = true;
+        break;
+      default:
+        break;
+    }
+
+  (verbose) ? output = &cout : output = &nullLog; 
+
+  *output << "verbose logging out" << endl;
+
+  if( inputFileName.empty() || origImagePath.empty() || finalOutputPath.empty() || maskImagePath.empty() || outputFilePrefix.empty() ) {
+    cerr <<  usage << endl;
+    cerr << "input name: " << inputFileName << endl;
+    cerr << "original path: " << origImagePath << endl;
+    cerr << "output path: " << finalOutputPath << endl;
+    cerr << "mask path: " << maskImagePath << endl;
+    cerr << "output prefix: " << outputFilePrefix << endl;
+    exit(EXIT_FAILURE);
+  }	
+
+  string fileName;	
+  ifstream inputFile(inputFileName.c_str());
+
+  if (inputFile.fail() ) {
+    cerr << "cannot open the input file that contains name of the input images\n";
+    exit(EXIT_FAILURE);
+  }
+
+  string statFileName = finalOutputPath + outputFilePrefix + "_statFile.txt";
+  foutSt.open(statFileName.c_str());
+
+  if (foutSt.fail()) {
+    cerr<<"cannot open the statfile"<<endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // debug file
+  string foutDebugCenFN = finalOutputPath + outputFilePrefix + "_statFileDebug.txt";
+  foutDebugCen.open(foutDebugCenFN.c_str());
+
+  if (foutDebugCen.fail()) {
+    cerr << "cannot open the statDebug file"<<endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // debug file speed distribution
+  string foutDebugSpeedFN = finalOutputPath + outputFilePrefix + "_speedDebug.txt";
+  foutDebugSpeed.open(foutDebugSpeedFN.c_str());
+  if (foutDebugSpeed.fail()) {
+    cerr << "cannot open the speedDebug file"<<endl;
+    exit(EXIT_FAILURE);
+  }
+
+  // open the file for statistics
+  string lPSFileName("LongestPositive.txt");
+  lPSFileName = finalOutputPath + outputFilePrefix + "_" + lPSFileName;
+  *output << "LongestPositive.txt file name is "<<lPSFileName<<endl;
+  foutLPS.open(lPSFileName.c_str());
+
+  // unsigned int objCount = 0;
+  //int frameCounter = 0;
+  int fileCounter=0;
+
+  char buffer[100];
+  string imgSize;
+  //	FlyObject a,b;
+  vector<pair<int,int> > shape;
+  vector<FlyObject > tempFOV;
+
+  // to find the new head direction
+  //bool currentlyCalculatingHead = true;
+
+  while (inputFile>>fileName) {
+
+    int fi = fileName.find("_");
+    // Be aware that this limits us to sample size of 99,999 (55.55 minutes)
+    // current sequence numbers spans from 0 - 18019, so 5 digits are needed
+    int span = 5;
+    string tempString = fileName.substr(fi+1,span);
+    int frameCounter = atoi(tempString.c_str());
+    //*output << frameCounter<<endl;
+
+    string fileNameForSave = fileName;
+
+    // save the name in the vector
+    fnVector.push_back(fileName);
+
+    fileName = maskImagePath + fileName;
+    cout << "Reading file "<<fileName<<endl;
+    Image* img = new Image(fileName.c_str());
+    int width = img->columns(),height = img->rows();
+    diagLength= static_cast<int> ( sqrt( (height*height) + (width*width) ) );
+
+    //*output << "Diagonal length is "<<diagLength<<endl;
+    //		Image* imgWithInfo;
+    //		imgWithInfo = new Image(fileName.c_str());
+    sprintf(buffer,"%ix%i",width,height);
+    string imsize(buffer);
+    imgSize = imsize;
+    // residual image is initialized with black representing not visited.
+    residual = new Image(buffer, "black");
+
+    *output<<"reading file "<<fileName<<endl;
+
+    tempFOV.clear();
+
+    for (int x = 0; x<width; x++) {
+      for (int y = 0; y<height; y++) {
+
+        //*output<<"comes here"<<endl;
+        shape.clear();
+        findObj(img, x, y, shape, true, true);
+        unsigned int s = shape.size();
+
+        if ( s > 0 )
+        {
+          //		*output << "size of the object is: " << s <<endl;
+          vector<double> eigenVal = covariantDecomposition(shape);
+          {					
+            //objCount++;
+
+            double velocity_x=0.0, velocity_y=0.0;
+            // save the object information
+            FlyObject tempFO(s, 
+                pair<int, int> (eigenVal[6], eigenVal[7]), 
+                pair<double, double> (eigenVal[4], eigenVal[5]), 
+                pair<double,double> (velocity_x, velocity_y),
+                false,
+                pair<double, double> (eigenVal[4], eigenVal[5]),
+                0.0);
+            tempFOV.push_back(tempFO);
+          }
+        }
+      }
+    }
+
+    delete img;
+    delete residual;
+
+    //		*output<<"Sorting the objects according to size"<<endl;
+    //		bubbleSort(tempFOV);
+
+    fOVector.clear();
+
+    for (int ti=0; ti<tempFOV.size(); ti++){
+      FlyObject a = tempFOV[ti];
+      fOVector.push_back(a);
+    }
+
+    bool currentFrameIsSingleBlob = false;
+    // if there is only one object then state of the system is single blob
+    if (fOVector.size() == 1 and currentFrameIsSingleBlob == false) {
+      currentFrameIsSingleBlob = true;
+
+      // if start as a single blob
+      if (fileCounter == 0) {
+        //	*output << "Start as a single blob"<<endl;
+        startOfAOneObject = fileCounter;
+      }
+
+    }
+
+    FrameInfo tempFI(frameCounter, fOVector, currentFrameIsSingleBlob);
+    fIVector.push_back(tempFI);
+    FrameInfo currentFI = fIVector[fileCounter];
+
+    // start processing the sequence if applicable
+    if (sequenceSize > 1) {
+
+      FrameInfo prevFI = fIVector[fileCounter-1];
+
+      int seqCond = sequenceCondition(prevFI, currentFI);
+
+      if (seqCond == STUCKING_TO_A_SINGLE_BLOB) {
+
+        endOfATrackSequence = fileCounter-1;
+
+        // save the index for printing the one object later on
+        startOfAOneObject = fileCounter;
+
+      } else if (seqCond == SEPARATING_FROM_SINGLE_BLOB) {
+
+        startOfATrackSequence = fileCounter;
+
+        // draw the single blob sequence
+        endOfAOneObject = fileCounter - 1;
+        *output << "Only one object StartIndex "<<startOfAOneObject<<" endIndex "<<endOfAOneObject<<" and seqSize "<<sequenceSize<<endl;
+        // use the two variables (startOfAOneObject, endOfAOneObject) pair to draw the single-blob objects.
+        // third parameter is used to indicate whether the current sequence is SINGLE_BLOB. So true is passed.
+        // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
+        // since we are considering the sequence length >=  15 to be a single blob state, so pass false parameter.
+        drawTheSequence(startOfAOneObject, endOfAOneObject,0, true, false);
+        startOfAOneObject = -1;
+        endOfAOneObject = -1;
+        //startOfATrackSequence = 1;
+        sequenceSize = 1;
+      }
+
+
+      if(seqCond == STUCKING_TO_A_SINGLE_BLOB) {
+        *output << "StartIndex "<<startOfATrackSequence<<" endIndex "<<endOfATrackSequence<<" and seqSize "<<sequenceSize<<endl;	
+        // if a sequence size is greater than 15 then it is processed. endOfATrackSequence - startOfATrackSequence == 15 when the size of the sequence is 16.
+        // endOfATrackSequence - startOfATrackSequence > 15 when the size of the sequence is > 16.
+        if ((endOfATrackSequence - startOfATrackSequence) >=15 ) {
+          processASequence(startOfATrackSequence, endOfATrackSequence);
+          *output << "Done processing"<<endl;
+        } else {
+          // use the two variables (startOfATrackSequence, endOfATrackSequence) pair to draw the unprocessed frames.
+          // third parameter is used to indicate whether the current sequence is not actual SINGLE_BLOB. So false is passed.
+          // fourth parameter is used to indicate whether the current sequence is processed(to separate it from the actual single blob state).
+          // since we are considering the sequence length <  15 to be a single blob state, so pass false parameter.
+          *output << "Sequence is only "<<(endOfATrackSequence-startOfATrackSequence+1)<<" images long so assumed as a single blob"<<endl;
+          drawTheSequence(startOfATrackSequence, endOfATrackSequence, 0, false, true);
+
+          // increase the unprocessed frame counter
+          //totalUnprocessedFrame = totalUnprocessedFrame + (endOfATrackSequence - startOfATrackSequence + 1);
+          foutSt<<"-------------------------------"<<endl;
+          foutSt<<"Unprocessed size "<<(endOfATrackSequence-startOfATrackSequence+1)<<endl;
+          foutSt<<"Total unprocessed size "<<totalUnprocessedFrame<<endl;
+          foutSt<<"-------------------------------"<<endl;
+        }
+
+        initSequence();
+        //*output << "Start of a single blob "<<startOfAOneObject<<" and end of a single blob "<<endOfAOneObject<<endl;
+
+      }
+      //*output << "Done for "<<fnVector[fileCounter-1]<<endl;
+    }
+
+    // increase the frame Counter
+    fileCounter++;
+
+    // increase the sequence size
+    sequenceSize++;
+  }
+
+  //*output << "No more files "<<startOfAOneObject<<" "<<endOfAOneObject<<endl;
+  inputFile.close();
+
+  //open this after debug
+  /**/
+  if (startOfATrackSequence!=-1 && endOfATrackSequence == -1) {
+    if ((sequenceSize-1) > 15 ) {
+
+      *output << "Last sequence that does not stick to a single blob status startIndex "<<startOfATrackSequence<<" endIndex "<<(sequenceSize+startOfATrackSequence-2)<<endl;
+      processASequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2));
+      *output << "Done processing"<<endl;
+
+    } else {
+      // this case was not handled earlier. It can happen that the flies are separated during the last sequences and less than 15 frames long.
+      *output << "Sequence is only "<<(sequenceSize-1)<<" images long so assumed as a single blob"<<endl;
+      drawTheSequence(startOfATrackSequence, (sequenceSize+startOfATrackSequence-2), 0, false, true);
+      foutSt<<"-------------------------------"<<endl;
+      foutSt<<"Unprocessed size "<<(sequenceSize-1)<<endl;
+      foutSt<<"Total unprocessed size "<<totalUnprocessedFrame<<endl;
+      foutSt<<"-------------------------------"<<endl;
+
+    }
+    initSequence();
+
+  } else if (startOfAOneObject != -1 && endOfAOneObject == -1) {
+    *output << "Last sequence that does not separate from one object state\n";
+    drawTheSequence(startOfAOneObject, (sequenceSize+startOfAOneObject - 2), 0, true, false);
+    endOfAOneObject = -1;
+    startOfAOneObject = -1;
+    sequenceSize = 1;
+  }
+
+
+  string cDDistFileName = finalOutputPath + outputFilePrefix + "_centroidDist.txt";
+  string hDAngleDistFileName = finalOutputPath + outputFilePrefix + "_headDist.txt";
+  string speedDistFileName = finalOutputPath + outputFilePrefix + "_speedDist.txt";
+
+	//TODO: rewrite to just generate the percentages
+	double centroidmean, centroidstd, headdirmean, headdirstd, speedmean, speedstd;
+	getMeanStdDev(centroidDistanceMap, &centroidmean, &centroidstd);
+	*output  << "centroid M :" <<  centroidmean << " S:" << centroidstd << endl;
+	getMeanStdDev(headDirAngleMap, &headdirmean, &headdirstd);
+	getMeanStdDev(speedMap, &speedmean, &speedstd);
+
+  double centroid = writeHist(cDDistFileName.c_str(), centroidDistanceMap);
+  double headDirAngle = writeHist(hDAngleDistFileName.c_str(), headDirAngleMap);
+  double speed  = writeHist(speedDistFileName.c_str(), speedMap);
+
+  // new calculation of percentage look at should consider only those frames where the flies are separated
+  double percentageLookingAt = static_cast<double>(totalMaleLookingAtFemale+totalFemaleLookingAtMale)/static_cast<double>(totalSeparated);
+  percentageLookingAt *= 100.0;
+
+  double percentageSingleBlob = static_cast<double>(totalSingleBlob)/static_cast<double>(fileCounter);
+  percentageSingleBlob *= 100.0;
+
+  foutSt<<"Total number of together "<<totalSingleBlob<<endl;
+  foutSt<<"Total number of male looking at "<<totalMaleLookingAtFemale<<endl;
+  foutSt<<"Total number of female looking at "<<totalFemaleLookingAtMale<<endl;
+  foutSt<<"Total number of looking at "<<(totalMaleLookingAtFemale+totalFemaleLookingAtMale)<<endl;
+  foutSt<<"Total number of unprocessed frame "<<totalUnprocessedFrame<<endl;
+  foutSt<<"Total number of frame where flies are separated (from the counter totalSeparated) "<<totalSeparated<<endl;
+  foutSt<<"Total number of frame where flies are separated "<<(fileCounter-totalUnprocessedFrame-totalSingleBlob)<<endl;
+  foutSt<<"Total number of frame "<<fileCounter<<endl;
+  foutSt<<"Percentage of frame in looking at mode "<<percentageLookingAt<<endl;
+  foutSt<<"Percentage of frame single blob "<<percentageSingleBlob<<endl;
+
+	foutSt<<"looking at\ttogether\tCentroid M\tCentroid Dev\tHeadDir M\tHeadDir Dev\tSpeed M\tSpeed Dev"<<endl;
+	foutSt<<percentageLookingAt << "\t";
+	foutSt<<percentageSingleBlob<< "\t";
+	foutSt<< centroidmean<<"\t";
+	foutSt<< centroidstd<<"\t";
+	foutSt<< headdirmean<<"\t";
+	foutSt<< headdirstd<<"\t";
+	foutSt<< speedmean <<"\t";
+	foutSt<< speedstd <<"\t" << endl;
+
+  foutSt.close();
+  foutDebugCen.close();
+  foutLPS.close();
+  foutDebugSpeed.close();
+
+  return 0;
+}
+
