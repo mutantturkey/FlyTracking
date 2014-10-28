@@ -83,7 +83,7 @@ int main( int argc, char **argv){
   }
 
   thpool_t* threadpool;        
-  threadpool=thpool_init(4);
+  threadpool=thpool_init(2);
 
   char filename[256];	
   char *temp;
@@ -94,7 +94,6 @@ int main( int argc, char **argv){
       if (temp != NULL) *temp = '\0'; 
       char *filename_r = malloc(256);
       strncpy(filename_r, filename, sizeof(filename));
-      printf("add work: %s \n", filename);
 
       thpool_add_work(threadpool, (void*)convert_image, (void*)filename_r);
     }

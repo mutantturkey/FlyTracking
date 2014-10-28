@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     exit(0);
   }
 
-  outputFile << left << setw(30) << "File Name" << left << setw(20) << "Standard deviation" << left << setw(20) << "Mean" << endl;
+  outputFile << left << setw(20) << "File Name" << left << setw(20) << "Mean" << left << setw(20) << "Standard Deviation" << endl;
 
   while( inputFileNames >> currentFileName ) {
 
@@ -103,7 +103,7 @@ int main(int argc, char* argv[]) {
     standardDev = sumSquaredResults/(N-1);
     standardDev = sqrt(standardDev);
 
-    outputFile<<left<<setw(30)<<currentFileName<<left<<setw(20)<<standardDev<<left<<setw(20)<<mean<<endl;
+    outputFile<<left<<setw(20)<<currentFileName<<left<<setw(20)<<mean<<left<<setw(20)<<standardDev<<endl;
 
     currentFile.close();
   }

@@ -14,18 +14,22 @@ FrameInfo::FrameInfo(int frameNo, vector<FlyObject > fOVector, bool isSingleBlob
 	this->isSingleBlob = isSingleBlob;
 
 }
+
 FrameInfo::FrameInfo(const FrameInfo &f) {
 	this->frameNo = f.getFrameNo();
 	this->fOVector = f.getFOVector();
 	this->isSingleBlob = f.getIsSingleBlob();
 	
 }
+
 int FrameInfo::getFrameNo() const {
 	return frameNo;
 }
+
 bool FrameInfo::getIsSingleBlob() const {
 	return isSingleBlob;
 }
+
 vector<FlyObject > FrameInfo::getFOVector() const{
 	return fOVector;
 }
@@ -33,12 +37,15 @@ vector<FlyObject > FrameInfo::getFOVector() const{
 void FrameInfo::setFrameNo(int fn) {
 	this->frameNo = fn;
 }
+
 void FrameInfo::setIsSingleBlob(bool isSingleBlob)  {
 	this->isSingleBlob = isSingleBlob;
 }
+
 void FrameInfo::setFOVector(vector<FlyObject > fov)  {
 	this->fOVector = fov;
 }
+
 void FrameInfo ::swapTheFlyObject() {
 	if (fOVector.size() > 1) {
 		cout << "swapping\n";
@@ -47,13 +54,12 @@ void FrameInfo ::swapTheFlyObject() {
 		fOVector[1] = a;
 	}
 }
+
 void FrameInfo::output(ostream &out) {
 	out<<"FrameNo			: "<<frameNo<<endl;
 	out<<"IsSingleBlob		: "<<isSingleBlob<<endl;
-//	out<<"fOVector size "<<fOVector.size()<<endl;
-	for (int i=0; i<fOVector.size(); i++) {
+	for (unsigned int i=0; i<fOVector.size(); i++) {
 		FlyObject a = fOVector[i];
-//		out<<"FlyObject "<<i<<endl;
 		a.output(out);
 	}
 }
